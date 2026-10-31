@@ -1,0 +1,5 @@
+node_modules/
+dist-single/
+dist/
+screenshots/
+*.zip

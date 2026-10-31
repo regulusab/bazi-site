@@ -1,0 +1,6 @@
+import {buildChart,yearPillar,liuYue,dayInfo,Solar,zhiRel} from './src/bazi.js';
+const c=buildChart({name:'t',gender:1,date:'1990-01-01',time:'12:00'});
+const got=c.pillars.map(p=>p.gan+p.zhi).join(' ');console.log(got, got==='己巳 丙子 丙寅 甲午'?'PASS':'FAIL');
+console.log(c.lev,c.self.toFixed(2),c.xi,c.start,c.dayun.slice(0,3),c.pillars.map(p=>p.nayin+p.ss));
+console.log(yearPillar(2026),liuYue(2026).map(x=>x.gz+x.jie).join(','),dayInfo(Solar.fromYmd(2026,11,1)),zhiRel('寅','申'));
+const c2=buildChart({name:'t',gender:1,date:'2000-02-04',time:'21:00'});console.log(c2.pillars.map(p=>p.gan+p.zhi).join(' '));

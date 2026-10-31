@@ -1,0 +1,22 @@
+<!doctype html><html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>八字論命 · 命理參考</title><link rel="stylesheet" href="./src/style.css"></head><body>
+<header><h1>八字論命</h1><p class="sub">四柱 · 流年 · 合婚 · 擇日</p></header>
+<nav id="tabs"><button data-t="chart" class="on">命盤</button><button data-t="year">流年運勢</button><button data-t="match">合婚合盤</button><button data-t="pick">擇日</button></nav>
+<main>
+<section class="card" id="formBox"><h2>命主資料</h2>
+<div class="grid">
+<label>姓名<input id="name" value="命主"></label>
+<label>性別<select id="gender"><option value="1">男（乾造）</option><option value="0">女（坤造）</option></select></label>
+<label>出生日期（國曆）<input type="date" id="date" value="1990-01-01"></label>
+<label>出生時間<input type="time" id="time" value="12:00"></label>
+<label>出生地（真太陽時，可選）<select id="city"></select></label>
+<label>或自訂經度<input id="lon" type="number" step="0.01" placeholder="例 121.56"></label>
+</div>
+<div class="row"><button id="calc" class="pri">排盤</button><button id="save">儲存檔案</button><select id="profiles"><option value="">— 已存檔案 —</option></select><button id="del">刪除</button></div>
+<p id="tstNote" class="muted"></p></section>
+<section id="chart" class="pane on"></section>
+<section id="year" class="pane"></section>
+<section id="match" class="pane"></section>
+<section id="pick" class="pane"></section>
+<footer>※ 本站內容依傳統命理規則自動生成，僅供參考與娛樂，不構成任何人生、醫療、財務或法律建議。</footer>
+</main><script type="module" src="./src/main.js"></script></body></html>
