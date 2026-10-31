@@ -105,6 +105,7 @@ function renderPick(){if(!chart)return;const c=chart,[lab,keys]=PURP[$('#pP').va
  <div class="scroll"><table><tr><th>日期</th><th>農曆</th><th>日柱</th><th>建除／值神</th><th>沖煞</th><th>宜</th><th>忌</th></tr>${rows.map(r=>`<tr class="${r.he?'good':''}"><td>${r.he?'★ ':''}${r.sol.toYmd()}<br><small>週${'日一二三四五六'[r.sol.getWeek()]}</small></td><td>${r.i.lunar}</td><td>${gzH(r.i.gz)}</td><td>${r.i.zhixing}／${r.i.tianshen}</td><td>沖${r.i.chong}<br>煞${r.i.sha}</td><td style="text-align:left"><small>${r.i.yi.join(' ')}</small></td><td style="text-align:left"><small>${r.i.ji.join(' ')}</small></td></tr>`).join('')}</table></div>`;}
 function run(){try{chart=buildChart(readForm());}catch(e){alert('資料有誤：'+e.message);return;}
  $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);renderDaily();if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();}
+{const q=new URLSearchParams(location.search);if(q.get('d'))$('#date').value=q.get('d');if(q.get('t'))$('#time').value=q.get('t');if(q.get('g'))$('#gender').value=q.get('g');if(q.get('n'))$('#name').value=q.get('n');}
 renderYearPane();renderMatchPane();renderPickPane();refreshP();$('#calc').onclick=run;run();
 const h=location.hash.slice(1);if(h)document.querySelector(`#tabs [data-t=${h}]`)?.click();
 
