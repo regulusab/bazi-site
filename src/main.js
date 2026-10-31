@@ -1,4 +1,5 @@
-import {buildReport} from './report.js';
+import {buildReport,rateRow,dyEval} from './report.js';
+import {dailyRows,lifeToCel,fmt,parseDate,MS_D} from './daily.js';
 import {buildChart,yearPillar,liuYue,dayInfo,Solar,zhiRel,ganRel,sanHe,shiShen,ganWx,zhiWx,WX,WXCLS} from './bazi.js';
 const $=s=>document.querySelector(s);
 const CITIES=[['不校正',''],['台北',121.56],['新北',121.46],['桃園',121.30],['新竹',120.97],['台中',120.68],['台南',120.21],['高雄',120.31],['花蓮',121.60],['台東',121.15],['宜蘭',121.75],['香港',114.17],['澳門',113.54],['北京',116.40],['上海',121.47],['廣州',113.26],['成都',104.07],['新加坡',103.82],['吉隆坡',101.69],['東京',139.69],['紐約',-74.0,'tz'],['洛杉磯',-118.24,'tz']];
@@ -103,7 +104,7 @@ function renderPick(){if(!chart)return;const c=chart,[lab,keys]=PURP[$('#pP').va
  $('#pOut').innerHTML=`<p>${lab}：共 ${rows.length} 個合適日子（已排除宜忌不符、${$('#pHd').checked?'黑道日、':''}沖命主日支 ${c.pillars[2].zhi} 或年支 ${c.pillars[0].zhi} 之日）。★ 為與命主相合或天干屬喜用。</p>
  <div class="scroll"><table><tr><th>日期</th><th>農曆</th><th>日柱</th><th>建除／值神</th><th>沖煞</th><th>宜</th><th>忌</th></tr>${rows.map(r=>`<tr class="${r.he?'good':''}"><td>${r.he?'★ ':''}${r.sol.toYmd()}<br><small>週${'日一二三四五六'[r.sol.getWeek()]}</small></td><td>${r.i.lunar}</td><td>${gzH(r.i.gz)}</td><td>${r.i.zhixing}／${r.i.tianshen}</td><td>沖${r.i.chong}<br>煞${r.i.sha}</td><td style="text-align:left"><small>${r.i.yi.join(' ')}</small></td><td style="text-align:left"><small>${r.i.ji.join(' ')}</small></td></tr>`).join('')}</table></div>`;}
 function run(){try{chart=buildChart(readForm());}catch(e){alert('資料有誤：'+e.message);return;}
- $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();}
+ $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);renderDaily();if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();}
 renderYearPane();renderMatchPane();renderPickPane();refreshP();$('#calc').onclick=run;run();
 const h=location.hash.slice(1);if(h)document.querySelector(`#tabs [data-t=${h}]`)?.click();
 
@@ -113,3 +114,22 @@ const docHtml=()=>`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns
 $('#rPrint').onclick=()=>{document.querySelector('#tabs [data-t=report]').click();window.print();};
 $('#rDoc').onclick=()=>dl(`${chart.name}_八字論命報告.doc`,'application/msword',docHtml());
 $('#rHtml').onclick=()=>dl(`${chart.name}_八字論命報告.html`,'text/html',docHtml());
+
+const ROLE={用:'用神',喜:'喜神',輔:'輔助',忌:'忌神',閒:'閒神'};
+let dRows=[];
+function renderDaily(){const c=chart;dRows=dailyRows(c);const segs=c.yun.segs;const today=new Date();const nowMs=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate(),12);
+ $('#daily').innerHTML=`<h2>大運逐日對照</h2><p class="muted">出生 ${c.solar.toYmdHms().slice(0,16)}，大運${c.forward?'順':'逆'}排。起運：${c.yun.trad.text}（口訣：三日一年、一日四月、一時辰十日）；精確以「交節時間差 × 120」折算，起運於 <b>${c.startSolar}</b>。</p>
+ <h3>精確大運起迄</h3><div class="scroll"><table><tr><th>運次</th><th>大運</th><th>十神</th><th>天體區間（交節）</th><th>人生起點</th><th>人生迄點</th><th>底色</th></tr>${segs.map((s,i)=>{const now=nowMs>=s.from&&nowMs<s.to;const e=i?dyEval(c,c.dayun[i-1]):null;
+  return `<tr class="${now?'cur':''}" data-seg="${i}" style="cursor:pointer"><td>${s.label}</td><td class="big">${gzH(s.gz)}</td><td>${s.ss||'月柱'}</td><td><small>${fmt(s.celFrom)} → ${fmt(s.celTo)}</small></td><td>${fmt(s.from)}</td><td>${fmt(s.to)}</td><td>${e?e.tone:'—'}</td></tr>`}).join('')}</table></div>
+ <h3>逐日表</h3><div class="row"><label>大運<select id="dSeg"><option value="all">全部</option>${segs.map((s,i)=>`<option value="${i}">${s.label} ${s.gz}</option>`).join('')}</select></label>
+ <label>人生日期→天體日<input type="date" id="dLife"></label><label>天體日→人生區間<input type="date" id="dCel"></label><button id="dCsv">下載 CSV</button></div><p id="dHit"></p>
+ <div class="scroll dtable"><table><thead><tr><th>#</th><th>天體日</th><th>日干支</th><th>干／支喜忌</th><th>人生區間（約120日）</th><th>大運</th><th>流年</th><th>綜合</th></tr></thead><tbody id="dBody"></tbody></table></div>
+ <p class="muted">每一列為出生後${c.forward?'順數':'逆數'}一個公曆日（00:00 換日；首尾日按交節時刻切分），對應人生約 120 天。綜合＝大運 45%＋流年 35%＋日干支 20%（依用喜忌計分），▲ 表示該日支沖命主日支或年支。僅供參考。</p>`;
+ const seg=$('#dSeg');const draw=()=>{const v=seg.value;const rs=dRows.map((r,i)=>[r,i]).filter(([r])=>v==='all'||r.seg===segs[v]);
+  $('#dBody').innerHTML=rs.map(([r,i])=>{const x=rateRow(c,r);const cur=nowMs>=r.from&&nowMs<r.to;return `<tr id="dr${i}" class="${cur?'cur':''}"><td>${i+1}</td><td>${fmt(r.cel,false)}</td><td class="big">${gzH(r.gz)}</td><td>${ROLE[c.A.role(ganWx(r.gz[0]))]}／${ROLE[c.A.role(zhiWx(r.gz[1]))]}</td><td>${fmt(r.from,false)} → ${fmt(r.to,false)}</td><td>${r.seg.gz}</td><td>${x.ly}</td><td><span class="lv-${x.lv}">${x.lv}${x.chong?'▲':''}</span></td></tr>`;}).join('');};
+ seg.onchange=draw;const cs=segs.findIndex(s=>nowMs>=s.from&&nowMs<s.to);if(cs>=0)seg.value=cs;draw();
+ document.querySelectorAll('#daily tr[data-seg]').forEach(tr=>tr.onclick=()=>{seg.value=tr.dataset.seg;draw();});
+ const hit=i=>{if(i<0){$('#dHit').textContent='超出對照範圍';return;}const r=dRows[i];seg.value=segs.indexOf(r.seg);draw();const el=$('#dr'+i);el.classList.add('hit');el.scrollIntoView({block:'center'});const x=rateRow(c,r);$('#dHit').innerHTML=`天體日 <b>${fmt(r.cel,false)} ${r.gz}日</b>（${ROLE[c.A.role(ganWx(r.gz[0]))]}／${ROLE[c.A.role(zhiWx(r.gz[1]))]}）↔ 人生 <b>${fmt(r.from)} → ${fmt(r.to)}</b>，${r.seg.gz}運、${x.ly}年，綜合 ${x.lv}。`;};
+ $('#dLife').onchange=e=>{const L=parseDate(e.target.value)+12*36e5;const cel=lifeToCel(c,L);hit(dRows.findIndex(r=>c.forward?cel>=r.celA&&cel<r.celB:cel<=r.celA&&cel>r.celB));};
+ $('#dCel').onchange=e=>{const d=parseDate(e.target.value);hit(dRows.findIndex(r=>r.cel===d));};
+ $('#dCsv').onclick=()=>dl(`${c.name}_逐日對照.csv`,'text/csv',['序,天體日,日干支,人生起,人生迄,大運,流年,綜合',...dRows.map((r,i)=>{const x=rateRow(c,r);return [i+1,fmt(r.cel,false),r.gz,fmt(r.from),fmt(r.to),r.seg.gz,x.ly,x.lv].join(',');})].join('\n'));}

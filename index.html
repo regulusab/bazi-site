@@ -1,7 +1,7 @@
 <!doctype html><html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>八字論命 · 命理參考</title><link rel="stylesheet" href="./src/style.css"></head><body>
 <header><h1>八字論命</h1><p class="sub">四柱 · 流年 · 合婚 · 擇日</p></header>
-<nav id="tabs"><button data-t="chart" class="on">命盤</button><button data-t="report">完整論命</button><button data-t="year">流年運勢</button><button data-t="match">合婚合盤</button><button data-t="pick">擇日</button></nav>
+<nav id="tabs"><button data-t="chart" class="on">命盤</button><button data-t="report">完整論命</button><button data-t="daily">逐日對照</button><button data-t="year">流年運勢</button><button data-t="match">合婚合盤</button><button data-t="pick">擇日</button></nav>
 <main>
 <section class="card" id="formBox"><h2>命主資料</h2>
 <div class="grid">
@@ -16,6 +16,7 @@
 <p id="tstNote" class="muted"></p></section>
 <section id="chart" class="pane on"></section>
 <section id="report" class="pane"><div class="row noprint"><button class="pri" id="rPrint">列印／存成 PDF</button><button id="rDoc">下載 Word (.doc)</button><button id="rHtml">下載 HTML</button></div><article id="rBody" class="report"></article></section>
+<section id="daily" class="pane"></section>
 <section id="year" class="pane"></section>
 <section id="match" class="pane"></section>
 <section id="pick" class="pane"></section>

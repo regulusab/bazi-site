@@ -6,5 +6,11 @@ console.log(yearPillar(2026),liuYue(2026).map(x=>x.gz+x.jie).join(','),dayInfo(S
 const c2=buildChart({name:'t',gender:1,date:'2000-02-04',time:'21:00'});console.log(c2.pillars.map(p=>p.gan+p.zhi).join(' '));
 import {buildReport} from './src/report.js';
 const s=buildChart({name:'s',gender:1,date:'1962-08-08',time:'00:10'});
-const ok=s.pillars.map(p=>p.gan+p.zhi).join('')==='壬寅丁未戊寅壬子'&&s.A.yong==='水'&&s.A.xi==='木'&&s.A.lev==='身強'&&s.startSolar==='1962-09-18';
+const ok=s.pillars.map(p=>p.gan+p.zhi).join('')==='壬寅丁未戊寅壬子'&&s.A.yong==='水'&&s.A.xi==='木'&&s.A.lev==='身強'&&s.startSolar.startsWith('1962-09-18');
 const r=buildReport(s,new Date(2026,9,31));console.log('sample chart/用神/起運', ok?'PASS':'FAIL', 'report sections', (r.match(/<h2>/g)||[]).length);
+const exp=['1962-09-18','1972-12-08','1983-01-02','1992-11-25','2002-08-28','2012-05-03','2022-01-09','2031-10-20','2041-09-22','2051-10-28'];
+const got2=s.yun.segs.slice(1).map(x=>new Date(x.from).toISOString().slice(0,10));
+console.log('1962 大運起點 vs 範本', JSON.stringify(got2)===JSON.stringify(exp.slice(0,got2.length))?"PASS":"FAIL", got2.join(' '));
+const {dailyRows}=await import('./src/daily.js');const dr=dailyRows(s);const rr=dr.find(x=>x.gz==='癸巳'&&new Date(x.from).getUTCFullYear()===2026);
+console.log('1962 天體日癸巳→2026-08-31~12-29', rr&&new Date(rr.from).toISOString().slice(0,10)==="2026-08-31"&&new Date(rr.to).toISOString().slice(0,10)==='2026-12-29'?'PASS':'FAIL');
+const n=buildChart({name:'n',gender:1,date:'1990-01-01',time:'12:00'});console.log('1990 逆排起運', !n.forward&&n.startSolar.startsWith('1998-03-23')?'PASS':'FAIL', n.startSolar, n.yun.trad.text, dailyRows(n).length+'日');

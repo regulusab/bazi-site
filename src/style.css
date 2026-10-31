@@ -26,3 +26,4 @@ table{border-collapse:collapse;width:100%;text-align:center;margin:6px 0}td,th{b
 .lv-高{color:#2f7d32;font-weight:bold}.lv-低{color:#c62828;font-weight:bold}
 @media print{header,nav,#formBox,.pane:not(#report),.noprint,footer{display:none!important}#report{display:block!important;border:0;box-shadow:none;padding:0}
  body{background:#fff}main{max-width:none;padding:0}.scroll{overflow:visible}table{page-break-inside:auto}tr{page-break-inside:avoid}h2{page-break-after:avoid}@page{margin:15mm}}
+.dtable{max-height:70vh;overflow:auto}.dtable thead th{position:sticky;top:0;z-index:1}tr.cur td{background:#fbe9c6}tr.hit td{outline:2px solid var(--red)}

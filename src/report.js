@@ -1,3 +1,4 @@
+import {dailyRows,lifeToCel,fmt,spanText} from './daily.js';
 import {GAN,WX,ganWx,zhiWx,hide,shiShen,zhiRel,ganRel,sanHe,yearPillar} from './bazi.js';
 import {rel,ssNature,SEASON} from './analysis.js';
 const ROLE_T={用:'用神',喜:'喜神',輔:'輔助',忌:'忌神',閒:'閒神'};
@@ -14,7 +15,7 @@ const GROUPOF=s=>({比肩:0,劫財:0,食神:1,傷官:1,偏財:2,正財:2,七殺:
 const isClashGan=(a,b)=>{const x=ganWx(a),y=ganWx(b),same=GAN.indexOf(a)%2===GAN.indexOf(b)%2;return same&&((WX.indexOf(x)+2)%5===WX.indexOf(y)||(WX.indexOf(y)+2)%5===WX.indexOf(x));};
 const mainHide=z=>hide(z)[0];
 export function dyFor(c,Y){return [...c.dayun].reverse().find(d=>Y>=d.year);}
-function wScore(c,w,k){const r=c.A.role(w);return ({用:2,喜:1.2,輔:.5,忌:-1.5,閒:0})[r]*k;}
+export function wScore(c,w,k){const r=c.A.role(w);return ({用:2,喜:1.2,輔:.5,忌:-1.5,閒:0})[r]*k;}
 export function yearEval(c,Y){
  const gz=yearPillar(Y),g=gz[0],z=gz[1],P=c.pillars,dy=dyFor(c,Y);let s=wScore(c,ganWx(g),1)+wScore(c,zhiWx(z),1.2);const sp=[],notes=[];
  P.forEach((p,i)=>{zhiRel(z,p.zhi).forEach(r=>{notes.push(`${r==='沖'?'沖':r.startsWith('六合')?'合':r}${p.label.slice(0,1)}支${p.zhi}`);if(r==='沖'&&(i===1||i===2))s-=0.8;});
@@ -26,7 +27,7 @@ export function yearEval(c,Y){
  const tri=sanHe([...P.map(p=>p.zhi),z]).filter(x=>!sanHe(P.map(p=>p.zhi)).includes(x));notes.push(...tri);
  const lv=s>=1.5?'高':s<=-0.8?'低':'平';const warn=sp.some(x=>/伏吟|天剋地沖|沖提綱|併臨/.test(x));
  return {Y,gz,dy,s,lv,mark:lv+(warn?'▲':''),sp,notes,ssG:shiShen(c.dm,g),ssZ:shiShen(c.dm,mainHide(z))};}
-function dyEval(c,d){const s=wScore(c,ganWx(d.gz[0]),1)+wScore(c,zhiWx(d.gz[1]),1.2);const first=wScore(c,ganWx(d.gz[0]),1),second=wScore(c,zhiWx(d.gz[1]),1);
+export function dyEval(c,d){const s=wScore(c,ganWx(d.gz[0]),1)+wScore(c,zhiWx(d.gz[1]),1.2);const first=wScore(c,ganWx(d.gz[0]),1),second=wScore(c,zhiWx(d.gz[1]),1);
  let tone=s>=1.5?'順線':s<=-0.8?'滯線':'平線';if(first>0&&second<0&&s>-0.8)tone='前順後滯';if(first<0&&second>0&&s<1.5)tone='前滯後順';
  const notes=[];c.pillars.forEach(p=>{zhiRel(d.gz[1],p.zhi).forEach(r=>notes.push(`${r.startsWith('六合')?'合':r}${p.label.slice(0,1)}支${p.zhi}`));if(p.gan+p.zhi===d.gz)notes.push('伏吟'+p.label);});
  notes.push(...sanHe([...c.pillars.map(p=>p.zhi),d.gz[1]]).filter(x=>!sanHe(c.pillars.map(p=>p.zhi)).includes(x)));
@@ -46,10 +47,10 @@ export function buildReport(c,now=new Date()){
  const ints=[];for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){ganRel(P[i].gan,P[j].gan).forEach(r=>ints.push(`${P[i].label}干${P[i].gan}與${P[j].label}干${P[j].gan}${r}`));zhiRel(P[i].zhi,P[j].zhi).forEach(r=>ints.push(`${P[i].label}支${P[i].zhi}與${P[j].label}支${P[j].zhi}${r}`));if(P[i].zhi===P[j].zhi)ints.push(`${P[i].label}、${P[j].label}${P[i].zhi}${P[j].zhi}同支`);}
  for(let i=0;i<3;i++){const a=P[i].gan,b=P[i+1].gan,x=ganWx(a),y=ganWx(b);if((WX.indexOf(x)+2)%5===WX.indexOf(y))ints.push(`${P[i].label}干${a}剋${P[i+1].label}干${b}`);if((WX.indexOf(y)+2)%5===WX.indexOf(x))ints.push(`${P[i+1].label}干${b}剋${P[i].label}干${a}`);}
  ints.push(...A.zh,...sanHe(P.map(p=>p.zhi)));
- H.push(`<h2>一、命盤總覽</h2><p>${c.gender?'乾造':'坤造'} ${c.solar.toYmdHms().slice(0,16)}，八字 <b>${P.map(p=>p.gan+p.zhi).join('　')}</b>，${c.dm}${c.dw}日主生於${P[1].zhi}月（${c.prevJie[0]} ${c.prevJie[1]} 後、${c.nextJie[0]} ${c.nextJie[1]} 前），${['陽','陰'][GAN.indexOf(P[0].gan)%2]}年生${c.gender?'男':'女'}・大運${c.forward?'順':'逆'}行，起運約 ${c.startSolar}（出生後 ${c.start}）。${c.off?`已作真太陽時校正 ${c.off.toFixed(1)} 分鐘。`:''}</p>`);
+ H.push(`<h2>一、命盤總覽</h2><p>${c.gender?'乾造':'坤造'} ${c.solar.toYmdHms().slice(0,16)}，八字 <b>${P.map(p=>p.gan+p.zhi).join('　')}</b>，${c.dm}${c.dw}日主生於${P[1].zhi}月（${c.prevJie[0]} ${c.prevJie[1]} 後、${c.nextJie[0]} ${c.nextJie[1]} 前），${['陽','陰'][GAN.indexOf(P[0].gan)%2]}年生${c.gender?'男':'女'}・大運${c.forward?'順':'逆'}行，起運 ${c.startSolar}（${c.yun.trad.text}；距${c.yun.J[0].name} ${new Date(c.yun.J[0].ms).toISOString().slice(0,16).replace('T',' ')}）。${c.off?`已作真太陽時校正 ${c.off.toFixed(1)} 分鐘。`:''}</p>`);
  H.push(tbl(['柱','年柱','月柱','日柱','時柱'],[['天干',...P.map(p=>`${p.gan}（${ganWx(p.gan)}）${p.ss}`)],['地支',...P.map(p=>`${p.zhi}（${zhiWx(p.zhi)}）`)],['藏干・十神',...P.map(p=>p.hide.map(h=>h.g+h.ss).join('・'))],['納音',...P.map(p=>p.nayin)],['宮位',...PALACE]]));
  H.push(`<p>五行氣數（天干 1、藏干依本中餘氣 0.6/0.3/0.1 加權、月令加倍）：${pctS.map(([w,v])=>`${w} ${(v*100).toFixed(1)}%${v<0.03?'（缺）':''}`).join('、')}。以${P[1].zhi}月令論旺衰：${WX.map(w=>w+A.wx[w]).join('、')}。</p><p>干支作用：${ints.length?ints.join('；'):'四柱間無明顯合沖刑害'}。</p>`);
- H.push(tbl(['序','大運','十神（干／支）','虛歲','起迄（約）'],c.dayun.map((d,i)=>[i+1,d.gz,`${d.ss}／${shiShen(c.dm,mainHide(d.gz[1]))}`,`${d.age}–${d.end}`,`${d.start} → ${c.dayun[i+1]?c.dayun[i+1].start:(d.endYear+1)+'年'}`])));
+ H.push(tbl(['序','大運','十神（干／支）','虛歲','起迄（精確，×120 折算）'],c.dayun.map((d,i)=>[i+1,d.gz,`${d.ss}／${shiShen(c.dm,mainHide(d.gz[1]))}`,`${d.age}–${d.end}`,`${d.start} → ${d.end_}`])));
  if(cur)H.push(`<p>現行 <b>${cur.gz}運</b>（${cur.start} 起），${Yn} 年${yearPillar(Yn)}流年，虛歲 ${age(Yn)}。</p>`);
  // 二
  H.push(`<h2>二、用神喜忌判定</h2><p>日主${A.delin?'得令':'失令'}（月令${P[1].zhi}屬${SEASON[P[1].zhi]}，${c.dw}${A.wx[c.dw]}）；通根於${A.roots.length?A.roots.join('、'):'無'}；天干${A.help.length?A.help.join('、')+'透比印相助':'無比印相助'}。同黨（比劫＋印）佔 ${(c.self*100).toFixed(0)}%，綜合計分 ${A.pts} 分 → 判 <b>${A.lev}</b>。</p>
@@ -99,5 +100,19 @@ export function buildReport(c,now=new Date()){
  H.push(`<h2>八、未來喜忌時段（${Yn}–${Yn+35}）</h2><p>判準：${A.yong}為用、${A.xi}為喜、${A.ji.join('')}為忌；再以伏吟、歲運併臨、沖提綱、天剋地沖、日犯歲君（歲干剋日干）、歲傷日干（日干剋歲干）等特例加註。高＝順線、平＝平線、低＝滯線、▲＝有沖剋特例。</p>`);
  H.push(tbl(['年','流年','大運','判定','要點'],ys.map(e=>[e.Y,e.gz,e.dy?e.dy.gz:'—',`<span class="lv-${e.lv}">${e.mark}</span>`,[`干${ROLE_T[A.role(ganWx(e.gz[0]))]}・支${ROLE_T[A.role(zhiWx(e.gz[1]))]}`,...e.sp,...e.notes].join('；')])));
  H.push(`<h3>喜忌時段總表</h3>`+tbl(['時段','判定','宜'],per.map(p=>[`${p.from}${p.to>p.from?'–'+p.to:''}`,{高:'順線',平:'平線',低:'滯線'}[p.k],{高:'開展、置產、進修、名位之事宜把握',平:'整備、穩中求進',低:'守成、保養、不擴張不擔保'}[p.k]])));
+ H.push(dailySection(c));
  H.push(`<p class="muted">※ 本報告依傳統命理規則自動生成，僅供參考與娛樂，不構成醫療、財務、法律或人生決策建議。</p>`);
  return H.join('\n');}
+
+export function rateRow(c,r){const A=c.A;const dayS=wScore(c,ganWx(r.gz[0]),1)+wScore(c,zhiWx(r.gz[1]),1.2);
+ const segGz=r.seg.gz;const dyS=wScore(c,ganWx(segGz[0]),1)+wScore(c,zhiWx(segGz[1]),1.2);
+ const ly=fromLife(r.from),ly2=fromLife(r.to-1);const yS=wScore(c,ganWx(ly[0]),1)+wScore(c,zhiWx(ly[1]),1.2);
+ const chong=zhiRel(r.gz[1],c.pillars[2].zhi).includes('沖')||zhiRel(r.gz[1],c.pillars[0].zhi).includes('沖');
+ const tot=0.45*dyS+0.35*yS+0.2*dayS-(chong?0.4:0);return {dayS,dyS,yS,ly:ly===ly2?ly:ly+'→'+ly2,chong,tot,lv:tot>=1?'高':tot<=-0.6?'低':'平'};}
+import LJ from 'lunar-javascript';
+export function fromLife(ms){const d=new Date(ms);return LJ.Solar.fromYmdHms(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate(),d.getUTCHours(),d.getUTCMinutes(),0).getLunar().getYearInGanZhiExact();}
+function dailySection(c,now=new Date()){const rows=dailyRows(c);const nowMs=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours(),now.getMinutes());
+ const i=rows.findIndex(r=>nowMs>=r.from&&nowMs<r.to);const pick=i<0?[]:rows.slice(Math.max(0,i-1),i+10);
+ return `<h2>九、大運逐日對照（一日≈120日）</h2><p>方法：出生時刻至每一「節」的實際時間差 × 120 即為人生時間（三日折一年、一日折四個月、一時辰折十日）。出生後${c.forward?'順數':'逆數'}之每一個公曆日（00:00 換日）對應人生一段約 120 天的區間；該日日干支之喜忌，配合所屬大運與流年，作為該區間的參考底色。</p>
+ ${i>=0?`<p>今天（${fmt(nowMs,false)}）對應天體日 <b>${fmt(rows[i].cel,false)} ${rows[i].gz}日</b>（所屬 ${rows[i].seg.gz} 運）。</p>`:''}`+(pick.length?tbl(['天體日','日干支','人生區間','大運','流年','綜合'],pick.map(r=>{const x=rateRow(c,r);return [fmt(r.cel,false),`${r.gz}（${ROLE_T[A_role(c,r.gz[0],1)]}／${ROLE_T[A_role(c,r.gz[1],0)]}）`,`${fmt(r.from,false)} → ${fmt(r.to,false)}`,r.seg.gz,x.ly,`<span class="lv-${x.lv}">${x.lv}${x.chong?'▲':''}</span>`];})):'');}
+function A_role(c,ch,isGan){return c.A.role(isGan?ganWx(ch):zhiWx(ch));}

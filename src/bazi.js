@@ -1,3 +1,4 @@
+import {preciseYun} from './daily.js';
 import {analyze} from './analysis.js';
 import LJ from 'lunar-javascript';
 const { Solar } = LJ;
@@ -51,6 +52,10 @@ export function buildChart({name,gender,date,time,lon}){
  const res={name,gender:Number(gender),solar,lunar,pillars,dm,dw,score,self,lev,strong,xi,ji,off,
   startSolar:ss0.toYmd(),prevJie:[tw(lunar.getPrevJie(false).getName()),lunar.getPrevJie(false).getSolar().toYmdHms().slice(0,16)],nextJie:[tw(lunar.getNextJie(false).getName()),lunar.getNextJie(false).getSolar().toYmdHms().slice(0,16)],forward:yun.isForward(),start:`${yun.getStartYear()}年${yun.getStartMonth()}個月${yun.getStartDay()}天`,dayun,
   lunarText:tw(lunar.toString()),shengXiao:tw(lunar.getYearShengXiaoExact())};
+ res.birthMs=Date.UTC(solar.getYear(),solar.getMonth()-1,solar.getDay(),solar.getHour(),solar.getMinute(),0);res.forward=yun.isForward();
+ res.yun=preciseYun(res.birthMs,res.forward,dayun.map(d=>d.gz),gz[1],dm);const by=solar.getYear();
+ res.yun.segs.slice(1).forEach((s,i)=>{const d=dayun[i];const a=new Date(s.from),b=new Date(s.to);d.start=s.jie&&new Date(s.from).toISOString().slice(0,16).replace('T',' ');d.end_=new Date(s.to).toISOString().slice(0,16).replace('T',' ');d.fromMs=s.from;d.toMs=s.to;d.year=a.getUTCFullYear();d.endYear=b.getUTCFullYear();d.age=d.year-by+1;d.end=d.endYear-by+1;});
+ res.startSolar=new Date(res.yun.startMs).toISOString().slice(0,16).replace('T',' ');
  const A=analyze(res);res.A=A;res.xi=[A.yong,A.xi];res.ji=A.ji;res.lev=A.lev;res.strong=A.strong;return res;}
 export function yearPillar(Y){return Solar.fromYmd(Y,6,1).getLunar().getYearInGanZhiExact();}
 export function liuYue(Y){const r=[];for(let i=0;i<12;i++){const mo=(i+1)%12+1,yy=i>=11?Y+1:Y;const l=Solar.fromYmd(yy,mo,15).getLunar();
