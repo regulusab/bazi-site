@@ -4,3 +4,7 @@ const got=c.pillars.map(p=>p.gan+p.zhi).join(' ');console.log(got, got==='己巳
 console.log(c.lev,c.self.toFixed(2),c.xi,c.start,c.dayun.slice(0,3),c.pillars.map(p=>p.nayin+p.ss));
 console.log(yearPillar(2026),liuYue(2026).map(x=>x.gz+x.jie).join(','),dayInfo(Solar.fromYmd(2026,11,1)),zhiRel('寅','申'));
 const c2=buildChart({name:'t',gender:1,date:'2000-02-04',time:'21:00'});console.log(c2.pillars.map(p=>p.gan+p.zhi).join(' '));
+import {buildReport} from './src/report.js';
+const s=buildChart({name:'s',gender:1,date:'1962-08-08',time:'00:10'});
+const ok=s.pillars.map(p=>p.gan+p.zhi).join('')==='壬寅丁未戊寅壬子'&&s.A.yong==='水'&&s.A.xi==='木'&&s.A.lev==='身強'&&s.startSolar==='1962-09-18';
+const r=buildReport(s,new Date(2026,9,31));console.log('sample chart/用神/起運', ok?'PASS':'FAIL', 'report sections', (r.match(/<h2>/g)||[]).length);

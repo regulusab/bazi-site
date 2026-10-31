@@ -21,3 +21,8 @@ table{border-collapse:collapse;width:100%;text-align:center;margin:6px 0}td,th{b
 .good{background:#e3f1e0}.bad{background:#f8e0dc}.score{font-size:3rem;color:var(--red);text-align:center}
 .scroll{overflow-x:auto}footer{text-align:center;color:#7a6d5c;font-size:.8rem;padding:16px}
 @media(max-width:600px){header h1{font-size:1.8rem}.big{font-size:1.4rem}td,th{padding:3px;font-size:.85rem}}
+.report h1.rt{text-align:center;color:var(--red);font-size:1.6rem;margin:6px 0}.report .rc{text-align:center;color:#7a6d5c}
+.report p{line-height:1.85;margin:6px 0}.report td{font-size:.9rem;text-align:left}.report h2{margin-top:22px}
+.lv-高{color:#2f7d32;font-weight:bold}.lv-低{color:#c62828;font-weight:bold}
+@media print{header,nav,#formBox,.pane:not(#report),.noprint,footer{display:none!important}#report{display:block!important;border:0;box-shadow:none;padding:0}
+ body{background:#fff}main{max-width:none;padding:0}.scroll{overflow:visible}table{page-break-inside:auto}tr{page-break-inside:avoid}h2{page-break-after:avoid}@page{margin:15mm}}

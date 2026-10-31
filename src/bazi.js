@@ -1,3 +1,4 @@
+import {analyze} from './analysis.js';
 import LJ from 'lunar-javascript';
 const { Solar } = LJ;
 const S='纳開订開会亲机竖涂盖门丧启钻坟动财猪鸡鸭养种经络酝酿网结渔头扫仓库灶补医疗词讼进斋绘庙观谢桥厕猎鱼归宁问筑发寿马坏馀余无伤杀贵龙时岁炉剑钗钏灯涧场腊杨锋雳长泽华东风临冲执满闭黄戏尝挂栋约签书买车帐处绝胜军阵兴缮张宫后业万与义乐乡云产众体达卖还运连远选间阴阳际难蜡驿啬节气惊蛰谷满种暑处霜寒罗丑纪审议设赏杂录欢织';
@@ -46,10 +47,11 @@ export function buildChart({name,gender,date,time,lon}){
  const out=WX[(WX.indexOf(dw)+1)%5],cai=WX[(WX.indexOf(dw)+2)%5],guan=WX[(WX.indexOf(dw)+3)%5];
  const xi=strong?[out,cai,guan].sort((a,b)=>score[a]-score[b]).slice(0,2):[yin,dw].sort((a,b)=>score[a]-score[b]);
  const ji=strong?[yin,dw]:[guan,cai];
- const yun=ec.getYun(Number(gender));const dayun=yun.getDaYun().slice(1,9).map(x=>({gz:x.getGanZhi(),age:x.getStartAge(),year:x.getStartYear(),ss:shiShen(dm,x.getGanZhi()[0])}));
- return {name,gender:Number(gender),solar,lunar,pillars,dm,dw,score,self,lev,strong,xi,ji,off,
-  start:`${yun.getStartYear()}年${yun.getStartMonth()}個月${yun.getStartDay()}天`,dayun,
-  lunarText:tw(lunar.toString()),shengXiao:tw(lunar.getYearShengXiaoExact())};}
+ const yun=ec.getYun(Number(gender));const ss0=yun.getStartSolar();const dayun=yun.getDaYun().slice(1,11).map((x,i)=>({gz:x.getGanZhi(),age:x.getStartAge(),end:x.getEndAge(),year:x.getStartYear(),endYear:x.getEndYear(),start:`${ss0.getYear()+10*i}-${String(ss0.getMonth()).padStart(2,'0')}-${String(ss0.getDay()).padStart(2,'0')}`,ss:shiShen(dm,x.getGanZhi()[0])}));
+ const res={name,gender:Number(gender),solar,lunar,pillars,dm,dw,score,self,lev,strong,xi,ji,off,
+  startSolar:ss0.toYmd(),prevJie:[tw(lunar.getPrevJie(false).getName()),lunar.getPrevJie(false).getSolar().toYmdHms().slice(0,16)],nextJie:[tw(lunar.getNextJie(false).getName()),lunar.getNextJie(false).getSolar().toYmdHms().slice(0,16)],forward:yun.isForward(),start:`${yun.getStartYear()}年${yun.getStartMonth()}個月${yun.getStartDay()}天`,dayun,
+  lunarText:tw(lunar.toString()),shengXiao:tw(lunar.getYearShengXiaoExact())};
+ const A=analyze(res);res.A=A;res.xi=[A.yong,A.xi];res.ji=A.ji;res.lev=A.lev;res.strong=A.strong;return res;}
 export function yearPillar(Y){return Solar.fromYmd(Y,6,1).getLunar().getYearInGanZhiExact();}
 export function liuYue(Y){const r=[];for(let i=0;i<12;i++){const mo=(i+1)%12+1,yy=i>=11?Y+1:Y;const l=Solar.fromYmd(yy,mo,15).getLunar();
  const jq=l.getPrevJie(true);r.push({gz:l.getMonthInGanZhiExact(),jie:tw(jq.getName()),date:jq.getSolar().toYmd()});}return r;}
