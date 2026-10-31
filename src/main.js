@@ -116,9 +116,8 @@ $('#rPrint').onclick=()=>{document.querySelector('#tabs [data-t=report]').click(
 $('#rDoc').onclick=()=>dl(`${chart.name}_八字論命報告.doc`,'application/msword',docHtml());
 $('#rHtml').onclick=()=>dl(`${chart.name}_八字論命報告.html`,'text/html',docHtml());
 
-var ROLE={用:'用神',喜:'喜神',輔:'輔助',忌:'忌神',閒:'閒神'};
 var dRows=[];
-function renderDaily(){const c=chart;dRows=dailyRows(c);const segs=c.yun.segs;const today=new Date();const nowMs=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate(),12);
+function renderDaily(){const ROLE={用:'用神',喜:'喜神',輔:'輔助',忌:'忌神',閒:'閒神'};const c=chart;dRows=dailyRows(c);const segs=c.yun.segs;const today=new Date();const nowMs=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate(),12);
  $('#daily').innerHTML=`<h2>大運逐日對照</h2><p class="muted">出生 ${c.solar.toYmdHms().slice(0,16)}，大運${c.forward?'順':'逆'}排。起運：${c.yun.trad.text}（口訣：三日一年、一日四月、一時辰十日）；精確以「交節時間差 × 120」折算，起運於 <b>${c.startSolar}</b>。</p>
  <h3>精確大運起迄</h3><div class="scroll"><table><tr><th>運次</th><th>大運</th><th>十神</th><th>天體區間（交節）</th><th>人生起點</th><th>人生迄點</th><th>底色</th></tr>${segs.map((s,i)=>{const now=nowMs>=s.from&&nowMs<s.to;const e=i?dyEval(c,c.dayun[i-1]):null;
   return `<tr class="${now?'cur':''}" data-seg="${i}" style="cursor:pointer"><td>${s.label}</td><td class="big">${gzH(s.gz)}</td><td>${s.ss||'月柱'}</td><td><small>${fmt(s.celFrom)} → ${fmt(s.celTo)}</small></td><td>${fmt(s.from)}</td><td>${fmt(s.to)}</td><td>${e?e.tone:'—'}</td></tr>`}).join('')}</table></div>
