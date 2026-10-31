@@ -102,18 +102,55 @@ function renderPick(){if(!chart)return;const c=chart,[lab,keys]=PURP[$('#pP').va
   if($('#pHd').checked&&i.luck!=='吉')continue;
   const z=i.gz[1];const clash=['日支','年支'].filter((_,k)=>zhiRel(z,c.pillars[k?0:2].zhi).includes('沖'));if(clash.length)continue;
   const he=zhiRel(z,c.pillars[2].zhi).some(r=>r.startsWith('六合'))||c.xi.includes(ganWx(i.gz[0]));rows.push({sol,i,he});}
- $('#pOut').innerHTML=`<p>${lab}：共 ${rows.length} 個合適日子（已排除宜忌不符、${$('#pHd').checked?'黑道日、':''}沖命主日支 ${c.pillars[2].zhi} 或年支 ${c.pillars[0].zhi} 之日）。★ 為與命主相合或天干屬喜用。</p>
+ $('#pOut').innerHTML=`<p>${lab}（${$('#pS').value} 至 ${$('#pE').value}）：共 ${rows.length} 個合適日子（已排除宜忌不符、${$('#pHd').checked?'黑道日、':''}沖命主日支 ${c.pillars[2].zhi} 或年支 ${c.pillars[0].zhi} 之日）。★ 為與命主相合或天干屬喜用。</p>
  <div class="scroll"><table><tr><th>日期</th><th>農曆</th><th>日柱</th><th>建除／值神</th><th>沖煞</th><th>宜</th><th>忌</th></tr>${rows.map(r=>`<tr class="${r.he?'good':''}"><td>${r.he?'★ ':''}${r.sol.toYmd()}<br><small>週${'日一二三四五六'[r.sol.getWeek()]}</small></td><td>${r.i.lunar}</td><td>${gzH(r.i.gz)}</td><td>${r.i.zhixing}／${r.i.tianshen}</td><td>沖${r.i.chong}<br>煞${r.i.sha}</td><td style="text-align:left"><small>${r.i.yi.join(' ')}</small></td><td style="text-align:left"><small>${r.i.ji.join(' ')}</small></td></tr>`).join('')}</table></div>`;}
 function run(){try{chart=buildChart(readForm());}catch(e){alert('資料有誤：'+e.message);return;}
- $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);renderDaily(chart,$,gzH,dl,readForm);if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();}
+ $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);renderDaily(chart,$,gzH,dl,readForm);if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();addBars();}
 {const q=new URLSearchParams(location.search);if(q.get('d'))$('#date').value=q.get('d');if(q.get('t'))$('#time').value=q.get('t');if(q.get('g'))$('#gender').value=q.get('g');if(q.get('n'))$('#name').value=q.get('n');if(q.get('lon'))$('#lon').value=q.get('lon');if(q.get('dst'))$('#dst').checked=true;}
-renderYearPane();renderMatchPane();renderPickPane();refreshP();$('#calc').onclick=run;run();
-const h=location.hash.slice(1);if(h)document.querySelector(`#tabs [data-t=${h}]`)?.click();
+renderYearPane();renderMatchPane();renderPickPane();refreshP();$('#calc').onclick=run;
+
 
 const docCss='body{font-family:"PMingLiU","Noto Serif TC",serif;line-height:1.7}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:3px 5px;font-size:10.5pt}th{background:#f3e8cc}h1{color:#7a1f1f;text-align:center}h2{color:#7a1f1f;border-bottom:1px solid #b8893b}.muted{color:#777;font-size:9pt}';
 function dl(name,type,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff',data],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 const docHtml=()=>`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${chart.name}論命報告</title><style>${docCss}</style></head><body>${$('#rBody').innerHTML}</body></html>`;
 $('#rPrint').onclick=()=>{document.querySelector('#tabs [data-t=report]').click();window.print();};
-$('#rDoc').onclick=async()=>{const {reportDocx}=await import('./docx-export.js');const b=await reportDocx($('#reportBody')||$('#report'));const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`${chart.name}_八字論命報告.docx`;a.click();setTimeout(()=>URL.revokeObjectURL(u),5000);};
 $('#rHtml').onclick=()=>dl(`${chart.name}_八字論命報告.html`,'text/html',docHtml());
 
+
+// ---- unified export toolbar (Word / PDF / 分享) ----
+const TABS={chart:['命盤','#chart'],report:['完整論命','#rBody'],daily:['逐日對照','#daily'],year:['流年運勢','#lyOut'],match:['合婚合盤','#mOut'],pick:['擇日','#pOut']};
+function stateUrl(tab){const f=readForm();const q=new URLSearchParams({n:f.name,d:f.date,t:f.time,g:f.gender});if(f.lon!=null)q.set('lon',f.lon);if(f.dst)q.set('dst','1');
+ if(tab==='year')q.set('y',$('#ly').value);
+ if(tab==='match'){q.set('mn',$('#mName').value);q.set('mg',$('#mG').value);q.set('md',$('#mD').value);q.set('mt',$('#mT').value);}
+ if(tab==='pick'){q.set('pp',$('#pP').value);q.set('ps',$('#pS').value);q.set('pe',$('#pE').value);q.set('ph',$('#pHd').checked?'1':'0');}
+ return location.origin+location.pathname+'?'+q+'#'+tab;}
+window.__stateUrl=stateUrl;
+function ensureOut(tab){if(tab==='match'&&!$('#mOut').innerHTML)renderMatch();if(tab==='pick'&&!$('#pOut').innerHTML)renderPick();if(tab==='year'&&!$('#lyOut').innerHTML)renderYear();}
+function meta(tab){const c=chart,lab=TABS[tab][0];let sub=`${c.name}｜${c.gender?'乾造':'坤造'}｜國曆 ${$('#date').value} ${$('#time').value}｜八字 ${c.pillars.map(p=>p.gan+p.zhi).join(' ')}`;
+ if(tab==='match')sub+=`｜合婚對象 ${$('#mName').value}（${$('#mD').value} ${$('#mT').value}）`;if(tab==='year')sub+=`｜流年 ${$('#ly').value}`;if(tab==='pick')sub+=`｜擇日 ${$('#pS').value}～${$('#pE').value}`;
+ return {title:`${c.name} ${lab}`,sub,base:fileBase(c.name,lab)};}
+async function doExport(tab,kind){ensureOut(tab);const m=meta(tab);const {toBlocks,makeDocx,makePdf}=await import('./export.js');const blocks=toBlocks($(TABS[tab][1]));
+ const blob=kind==='pdf'?await makePdf(blocks,m.title,m.sub):await makeDocx(blocks,m.title,m.sub);return {blob,name:m.base+(kind==='pdf'?'.pdf':'.docx')};}
+window.__export=doExport;
+const fileBase=(n,l)=>{const d=new Date();return `${(n||'命主').replace(/[\\/:*?"<>|\s]/g,'')}_${l}_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;};
+const ready={};
+function addBars(){for(const tab of Object.keys(TABS)){const pane=$('#'+tab);if(pane.querySelector(':scope>.xbar'))continue;const d=document.createElement('div');d.className='row xbar noprint';
+ d.innerHTML=`<button class="xw" data-k="docx">下載 Word</button><button class="xp" data-k="pdf">下載 PDF</button><button class="xs" data-k="share">分享</button><small class="muted xmsg"></small>`;pane.prepend(d);
+ d.onclick=async e=>{const b=e.target.closest('button');if(!b||!chart)return;const k=b.dataset.k,msg=d.querySelector('.xmsg');
+  try{if(k==='share'){const url=stateUrl(tab);
+    if(ready[tab]){const f=ready[tab];ready[tab]=null;b.textContent='分享';try{await navigator.share({files:[f],title:meta(tab).title,text:url});}catch(err){if(err.name!=='AbortError')await linkFallback(url);}return;}
+    const canFiles=navigator.share&&navigator.canShare&&navigator.canShare({files:[new File(['x'],'t.pdf',{type:'application/pdf'})]});
+    if(canFiles){msg.textContent='產生 PDF 中…';const r=await doExport(tab,'pdf');const f=new File([r.blob],r.name,{type:'application/pdf'});msg.textContent='';
+     try{await navigator.share({files:[f],title:meta(tab).title,text:url});}catch(err){if(err.name==='NotAllowedError'){ready[tab]=f;b.textContent='PDF 已備妥，點此分享';}else if(err.name!=='AbortError')await linkFallback(url);}}
+    else if(navigator.share){try{await navigator.share({title:meta(tab).title,url});}catch(err){if(err.name!=='AbortError')await linkFallback(url);}}
+    else await linkFallback(url);return;}
+   msg.textContent=k==='pdf'?'產生 PDF 中（首次需載入字型）…':'產生 Word 中…';const r=await doExport(tab,k);saveBlob(r.blob,r.name);msg.textContent='已下載 '+r.name;}
+  catch(err){console.error(err);msg.textContent='匯出失敗：'+err.message;}};}}
+async function linkFallback(url){try{await navigator.clipboard.writeText(url);alert('已複製分享連結：\n'+url);}catch(e){prompt('分享連結（請複製）',url);}}
+function saveBlob(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},4000);}
+
+{const q=new URLSearchParams(location.search);if(q.get('y'))$('#ly').value=q.get('y');
+ if(q.get('md')){$('#mName').value=q.get('mn')||'對方';$('#mG').value=q.get('mg')||'0';$('#mD').value=q.get('md');$('#mT').value=q.get('mt')||'12:00';}
+ if(q.get('ps')){$('#pP').value=q.get('pp')||'0';$('#pS').value=q.get('ps');$('#pE').value=q.get('pe')||q.get('ps');$('#pHd').checked=q.get('ph')!=='0';}
+ run();if(q.get('md'))renderMatch();if(q.get('ps'))renderPick();addBars();}
+const h=location.hash.slice(1);if(h)document.querySelector(`#tabs [data-t=${h}]`)?.click();

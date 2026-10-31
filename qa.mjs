@@ -22,7 +22,7 @@ ok('1962 page errors',e.length===0,e.join('|'));
 await p.click('[data-t=report]');await p.waitForTimeout(500);const rep=await txt(p,'#report');
 ok('計算工具與方法 section',rep.includes('計算工具與方法')&&rep.includes('DE421'));
 ok('header DE421',(await txt(p,'header')).includes('DE421'));
-const [dl2]=await Promise.all([p.waitForEvent('download',{timeout:15000}).catch(()=>null),p.click('#rDoc')]);
+const [dl2]=await Promise.all([p.waitForEvent('download',{timeout:15000}).catch(()=>null),p.click('#report>.xbar [data-k=docx]')]);
 if(dl2)await dl2.saveAs('/workspace/qa/r.docx');ok('docx download',!!dl2);
 await p.emulateMedia({media:'print'});await p.pdf({path:'/workspace/qa/r.pdf'}).then(()=>ok('PDF print',true)).catch(x=>ok('PDF print',false,x.message));
 // share roundtrip

@@ -30,3 +30,4 @@ table{border-collapse:collapse;width:100%;text-align:center;margin:6px 0}td,th{b
 header .src{margin:6px 0 0;font-size:.8rem;color:#f3d9a4;letter-spacing:.05em}
 details.dseg{border:1px solid var(--line);border-radius:4px;margin:6px 0;padding:4px 8px;background:#fffaf0}details summary{cursor:pointer;padding:4px 0}
 .chk span{display:flex;gap:6px;align-items:center}
+.xbar{flex-wrap:wrap}.xbar .xmsg{align-self:center}
