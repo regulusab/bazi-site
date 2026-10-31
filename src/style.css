@@ -27,3 +27,6 @@ table{border-collapse:collapse;width:100%;text-align:center;margin:6px 0}td,th{b
 @media print{header,nav,#formBox,.pane:not(#report),.noprint,footer{display:none!important}#report{display:block!important;border:0;box-shadow:none;padding:0}
  body{background:#fff}main{max-width:none;padding:0}.scroll{overflow:visible}table{page-break-inside:auto}tr{page-break-inside:avoid}h2{page-break-after:avoid}@page{margin:15mm}}
 .dtable{max-height:70vh;overflow:auto}.dtable thead th{position:sticky;top:0;z-index:1}tr.cur td{background:#fbe9c6}tr.hit td{outline:2px solid var(--red)}
+header .src{margin:6px 0 0;font-size:.8rem;color:#f3d9a4;letter-spacing:.05em}
+details.dseg{border:1px solid var(--line);border-radius:4px;margin:6px 0;padding:4px 8px;background:#fffaf0}details summary{cursor:pointer;padding:4px 0}
+.chk span{display:flex;gap:6px;align-items:center}

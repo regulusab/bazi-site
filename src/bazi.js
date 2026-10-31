@@ -1,4 +1,5 @@
 import {preciseYun} from './daily.js';
+import {inRange,yearMonthPillar,jieAround} from './terms.js';
 import {analyze} from './analysis.js';
 import LJ from 'lunar-javascript';
 const { Solar } = LJ;
@@ -30,13 +31,15 @@ export function sanHe(zs){return SANHE.filter(([s])=>[...s].every(c=>zs.includes
 export function trueSolar(d,lon){if(lon==null||isNaN(lon))return {d,off:0};const st=new Date(d.getFullYear(),0,0);const N=Math.floor((d-st)/864e5);
  const B=2*Math.PI*(N-81)/364;const eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);const off=(lon-120)*4+eot;
  return {d:new Date(d.getTime()+off*6e4),off};}
-export function buildChart({name,gender,date,time,lon}){
+export function buildChart({name,gender,date,time,lon,dst}){
  const [Y,M,D]=date.split('-').map(Number),[h,m]=time.split(':').map(Number);
- const {d,off}=trueSolar(new Date(Y,M-1,D,h,m),lon);
+ const r0=trueSolar(new Date(Y,M-1,D,h-(dst?1:0),m),lon);const d=r0.d,off=r0.off;
  const solar=Solar.fromYmdHms(d.getFullYear(),d.getMonth()+1,d.getDate(),d.getHours(),d.getMinutes(),0);
  const lunar=solar.getLunar(),ec=lunar.getEightChar();
- const gz=[ec.getYear(),ec.getMonth(),ec.getDay(),ec.getTime()];const dm=gz[2][0];
- const ny=[ec.getYearNaYin(),ec.getMonthNaYin(),ec.getDayNaYin(),ec.getTimeNaYin()].map(tw);
+ const birthMs=Date.UTC(solar.getYear(),solar.getMonth()-1,solar.getDay(),solar.getHour(),solar.getMinute(),0);
+ const useDE=inRange(birthMs);const ym=useDE?yearMonthPillar(birthMs):null;
+ const gz=[useDE?ym.year:ec.getYear(),useDE?ym.month:ec.getMonth(),ec.getDay(),ec.getTime()];const dm=gz[2][0];
+ const ny=gz.map(g=>tw(LJ.LunarUtil.NAYIN[g]));
  const pillars=gz.map((p,i)=>({label:['年柱','月柱','日柱','時柱'][i],gan:p[0],zhi:p[1],ss:i===2?'日主':shiShen(dm,p[0]),
    hide:hide(p[1]).map(g=>({g,ss:shiShen(dm,g)})),nayin:ny[i]}));
  // strength
@@ -48,14 +51,17 @@ export function buildChart({name,gender,date,time,lon}){
  const out=WX[(WX.indexOf(dw)+1)%5],cai=WX[(WX.indexOf(dw)+2)%5],guan=WX[(WX.indexOf(dw)+3)%5];
  const xi=strong?[out,cai,guan].sort((a,b)=>score[a]-score[b]).slice(0,2):[yin,dw].sort((a,b)=>score[a]-score[b]);
  const ji=strong?[yin,dw]:[guan,cai];
- const yun=ec.getYun(Number(gender));const ss0=yun.getStartSolar();const dayun=yun.getDaYun().slice(1,11).map((x,i)=>({gz:x.getGanZhi(),age:x.getStartAge(),end:x.getEndAge(),year:x.getStartYear(),endYear:x.getEndYear(),start:`${ss0.getYear()+10*i}-${String(ss0.getMonth()).padStart(2,'0')}-${String(ss0.getDay()).padStart(2,'0')}`,ss:shiShen(dm,x.getGanZhi()[0])}));
- const res={name,gender:Number(gender),solar,lunar,pillars,dm,dw,score,self,lev,strong,xi,ji,off,
-  startSolar:ss0.toYmd(),prevJie:[tw(lunar.getPrevJie(false).getName()),lunar.getPrevJie(false).getSolar().toYmdHms().slice(0,16)],nextJie:[tw(lunar.getNextJie(false).getName()),lunar.getNextJie(false).getSolar().toYmdHms().slice(0,16)],forward:yun.isForward(),start:`${yun.getStartYear()}年${yun.getStartMonth()}個月${yun.getStartDay()}天`,dayun,
+ const yangYear=GAN.indexOf(gz[0][0])%2===0;const forward=(Number(gender)===1)===yangYear;
+ const mi=GAN.indexOf(gz[1][0]),mz=ZHI.indexOf(gz[1][1]);
+ const dyGz=Array.from({length:10},(_,i)=>{const k=forward?i+1:-(i+1);return GAN[((mi+k)%10+10)%10]+ZHI[((mz+k)%12+12)%12];});
+ const yunR=preciseYun(birthMs,forward,dyGz,gz[1],dm,useDE);const by=solar.getYear();const iso=ms=>new Date(ms).toISOString().slice(0,16).replace('T',' ');
+ const dayun=yunR.segs.slice(1).map((sg,i)=>{const a=new Date(sg.from),b=new Date(sg.to);return {gz:dyGz[i],ss:shiShen(dm,dyGz[i][0]),start:iso(sg.from),end_:iso(sg.to),fromMs:sg.from,toMs:sg.to,year:a.getUTCFullYear(),endYear:b.getUTCFullYear(),age:a.getUTCFullYear()-by+1,end:b.getUTCFullYear()-by+1};});
+ const J0=yunR.J[0];const around=useDE?jieAround(birthMs):null;
+ const res={name,gender:Number(gender),solar,lunar,pillars,dm,dw,score,self,lev,strong,xi,ji,off,dst:!!dst,useDE,birthMs,forward,yun:yunR,dayun,
+  startSolar:iso(yunR.startMs),start:`${yunR.trad.y}年${yunR.trad.m}個月${yunR.trad.d}天`,
+  prevJie:useDE?[around.prev.name,iso(around.prev.ms)+':'+new Date(around.prev.ms).toISOString().slice(17,19)]:[tw(lunar.getPrevJie(false).getName()),lunar.getPrevJie(false).getSolar().toYmdHms()],
+  nextJie:useDE?[around.next.name,iso(around.next.ms)+':'+new Date(around.next.ms).toISOString().slice(17,19)]:[tw(lunar.getNextJie(false).getName()),lunar.getNextJie(false).getSolar().toYmdHms()],
   lunarText:tw(lunar.toString()),shengXiao:tw(lunar.getYearShengXiaoExact())};
- res.birthMs=Date.UTC(solar.getYear(),solar.getMonth()-1,solar.getDay(),solar.getHour(),solar.getMinute(),0);res.forward=yun.isForward();
- res.yun=preciseYun(res.birthMs,res.forward,dayun.map(d=>d.gz),gz[1],dm);const by=solar.getYear();
- res.yun.segs.slice(1).forEach((s,i)=>{const d=dayun[i];const a=new Date(s.from),b=new Date(s.to);d.start=s.jie&&new Date(s.from).toISOString().slice(0,16).replace('T',' ');d.end_=new Date(s.to).toISOString().slice(0,16).replace('T',' ');d.fromMs=s.from;d.toMs=s.to;d.year=a.getUTCFullYear();d.endYear=b.getUTCFullYear();d.age=d.year-by+1;d.end=d.endYear-by+1;});
- res.startSolar=new Date(res.yun.startMs).toISOString().slice(0,16).replace('T',' ');
  const A=analyze(res);res.A=A;res.xi=[A.yong,A.xi];res.ji=A.ji;res.lev=A.lev;res.strong=A.strong;return res;}
 export function yearPillar(Y){return Solar.fromYmd(Y,6,1).getLunar().getYearInGanZhiExact();}
 export function liuYue(Y){const r=[];for(let i=0;i<12;i++){const mo=(i+1)%12+1,yy=i>=11?Y+1:Y;const l=Solar.fromYmd(yy,mo,15).getLunar();

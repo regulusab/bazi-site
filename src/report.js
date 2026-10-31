@@ -65,7 +65,7 @@ export function buildReport(c,now=new Date()){
  const top=Object.entries(P.reduce((m,p,i)=>{if(i!==2)m[p.ss]=(m[p.ss]||0)+1;p.hide.forEach((h,j)=>m[h.ss]=(m[h.ss]||0)+(j?0.3:0.6));return m;},{})).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]);
  const shiW=rel(c.dw,1);const lowShi=A.pct[shiW]<0.08;
  H.push(`<p><b>性格側寫：</b>${c.dm}${c.dw}日主，${({甲:'正直進取、有擔當',乙:'柔韌靈活、善於適應',丙:'熱情開朗、慷慨外放',丁:'細膩溫暖、內斂有洞察',戊:'厚重沉穩、可靠包容',己:'務實細心、善於經營',庚:'果斷剛毅、重義氣',辛:'精緻敏銳、重品味',壬:'聰明奔放、志向遠大',癸:'溫和聰慧、善於思考'})[c.dm]}；日支坐${P[2].hide[0].ss}，${SSP[P[2].hide[0].ss]}之性藏於內。命局以 ${top.join('、')} 最顯：${top.map(s=>SSP[s]).join('；')}。${c.strong?'身強能任事，敢做決斷，弱點是固執與承擔過多。':'身弱心思細，善借力，弱點是猶豫與耗神。'}${lowShi?`食傷（${shiW}）偏弱，表達與變通須靠後天練習。`:''}</p>`);
- H.push(`<p><b>大運十神本象：</b>${c.dayun.slice(0,8).map(d=>{const z=shiShen(c.dm,mainHide(d.gz[1]));const n=[ssNature(d.ss),ssNature(z)];const b=n.every(x=>x==='吉')?'大吉':n.every(x=>x==='凶')?'大凶':n.includes('凶')&&n.includes('吉')?'吉凶參半':n.includes('吉')?'吉':n.includes('凶')?'凶':'平';return `${d.gz}${d.ss}坐${z}${b}`;}).join('、')}（本象未計喜忌，請與第二節底色合看）。</p>`);
+ H.push(`<p><b>大運十神本象：</b>${c.dayun.map(d=>{const z=shiShen(c.dm,mainHide(d.gz[1]));const n=[ssNature(d.ss),ssNature(z)];const b=n.every(x=>x==='吉')?'大吉':n.every(x=>x==='凶')?'大凶':n.includes('凶')&&n.includes('吉')?'吉凶參半':n.includes('吉')?'吉':n.includes('凶')?'凶':'平';return `${d.gz}${d.ss}坐${z}${b}`;}).join('、')}（本象未計喜忌，請與第二節底色合看）。</p>`);
  // 四 健康
  const weak=pctS.slice().reverse().slice(0,2).map(x=>x[0]),over=pctS[0][0];const sick=[];
  P.forEach((p,i)=>{const hits=[];P.forEach((q,j)=>{if(i!==j)zhiRel(p.zhi,q.zhi).filter(r=>!r.startsWith('六合')).forEach(r=>hits.push(`與${q.label}${q.zhi}${r}`));});
@@ -101,6 +101,7 @@ export function buildReport(c,now=new Date()){
  H.push(tbl(['年','流年','大運','判定','要點'],ys.map(e=>[e.Y,e.gz,e.dy?e.dy.gz:'—',`<span class="lv-${e.lv}">${e.mark}</span>`,[`干${ROLE_T[A.role(ganWx(e.gz[0]))]}・支${ROLE_T[A.role(zhiWx(e.gz[1]))]}`,...e.sp,...e.notes].join('；')])));
  H.push(`<h3>喜忌時段總表</h3>`+tbl(['時段','判定','宜'],per.map(p=>[`${p.from}${p.to>p.from?'–'+p.to:''}`,{高:'順線',平:'平線',低:'滯線'}[p.k],{高:'開展、置產、進修、名位之事宜把握',平:'整備、穩中求進',低:'守成、保養、不擴張不擔保'}[p.k]])));
  H.push(dailySection(c));
+ H.push(`<h2>十、計算工具與方法</h2><p><b>節氣：</b>${c.useDE?'NASA JPL DE421 行星星曆（skyfield 計算），以太陽地心視黃經每 15° 為一節氣，時間換算為台北標準時間（UTC+8），精確至秒（±1 秒）；預先計算 1900–2050 年資料隨網站附帶。':'出生時間超出 DE421 表範圍（1900–2050），改用 lunar-javascript 壽星天文曆演算法。'}</p><p><b>四柱：</b>年柱以立春交節時刻換年，月柱以「節」換月（五虎遁定月干），日柱、時柱由 lunar-javascript 推算${c.off?'，並作真太陽時校正':''}${c.dst?'；出生時間已扣除夏令時 1 小時':''}。</p><p><b>大運：</b>陽男陰女順排、陰男陽女逆排，共十步；起運與各運交接時刻 = 出生時刻 + |節氣時刻 − 出生時刻| × 120（天體 1 分 = 人生 2 小時，1 秒 = 2 分）。</p><p><b>論斷：</b>旺衰、格局、用神、調候及流年評分為規則式推演，僅供參考。</p>`);
  H.push(`<p class="muted">※ 本報告依傳統命理規則自動生成，僅供參考與娛樂，不構成醫療、財務、法律或人生決策建議。</p>`);
  return H.join('\n');}
 
