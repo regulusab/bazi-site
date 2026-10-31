@@ -37,9 +37,9 @@ for(const [tm,exp] of [['16:20','癸卯'],['16:30','甲辰']]){[p,e]=await open(
 // fallback
 for(const y of ['1890-05-05','2060-05-05']){[p,e]=await open(`?d=${y}&t=12:00&g=1`,'#daily');ok(`fallback ${y}`,e.length===0&&(await txt(p,'#daily')).length>100,e.join('|'));await p.close();}
 // tabs & 1990
-[p,e]=await open('?d=1990-01-01&t=12:00&g=1','');for(const t of ['chart','report','daily','year','match','pick']){await p.click(`[data-t=${t}]`);await p.waitForTimeout(300);}
+[p,e]=await open('?d=1990-01-01&t=12:00&g=1','');ok('1990 pillars',(await txt(p,'#chart')).includes('天干\t己\t丙\t丙\t甲'));for(const t of ['chart','report','daily','year','match','pick']){await p.click(`[data-t=${t}]`);await p.waitForTimeout(300);}
 await p.click('[data-t=year]');await p.click('#lyGo');await p.click('[data-t=match]');await p.click('#mGo');await p.click('[data-t=pick]');await p.click('#pGo');await p.waitForTimeout(800);
-ok('1990 pillars',(await txt(p,'#chart')).includes('天干\t己\t丙\t丙\t甲'));ok('all tabs no errors',e.length===0,e.join('|'));
+ok('all tabs no errors',e.length===0,e.join('|'));
 ok('match score',(await txt(p,'.score')).length>0);ok('pick results',(await txt(p,'#pOut')).includes('合適日子'));await p.close();
 // mobile
 [p,e]=await open('?d=1962-08-08&t=00:10&g=1','#daily',{width:390,height:844});const ov=await p.evaluate(()=>document.documentElement.scrollWidth);ok('mobile 390 no horizontal overflow',ov<=392,'scrollWidth '+ov);await p.screenshot({path:'/workspace/qa/mobile.png'});await p.close();
