@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node test.mjs",
-    "qa": "node qa.mjs && node qa-export.mjs",
+    "qa": "node qa.mjs && node qa-export.mjs && node qa-global.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173"
@@ -17,7 +17,8 @@
   "dependencies": {
     "docx": "^9.15.0",
     "lunar-javascript": "^1.7.7",
-    "pdfmake": "^0.2.23"
+    "pdfmake": "^0.2.23",
+    "tz-lookup": "^6.1.25"
   },
   "devDependencies": {
     "vite": "^8.3.5",

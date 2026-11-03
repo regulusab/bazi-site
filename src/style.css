@@ -31,3 +31,7 @@ header .src{margin:6px 0 0;font-size:.8rem;color:#f3d9a4;letter-spacing:.05em}
 details.dseg{border:1px solid var(--line);border-radius:4px;margin:6px 0;padding:4px 8px;background:#fffaf0}details summary{cursor:pointer;padding:4px 0}
 .chk span{display:flex;gap:6px;align-items:center}
 .xbar{flex-wrap:wrap}.xbar .xmsg{align-self:center}
+nav a.navlink{border:1px solid var(--gold);background:#fff3d6;padding:8px 18px;border-radius:3px;color:#7a1f1f;text-decoration:none;font-weight:bold}nav a.navlink.on{background:var(--red);color:#fff}
+.gcols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.gcols{grid-template-columns:1fr}}
+.warn{background:#fff1e6;border-left:4px solid #c0392b;padding:6px 10px;margin:6px 0}
+.calc td:first-child{white-space:nowrap;color:#7a1f1f}.calc td{text-align:left}
