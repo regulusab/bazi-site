@@ -1,0 +1,28 @@
+<!doctype html><html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全球八字試算站 · 干支換日線（東經 70°）</title><link rel="stylesheet" href="./src/style.css"></head><body>
+<header><h1>全球八字</h1><p class="sub">干支換日線（東經 70°）試算站</p><p class="src">節氣：JPL DE421 星曆（以世界時 UT 瞬間比對）</p></header>
+<nav><a class="navlink" href="./index.html">← 回八字論命</a><a class="navlink on" href="./global.html">全球八字</a></nav>
+<main>
+<section class="card" id="gForm"><h2>出生資料（出生地當地鐘錶時間）</h2>
+<div class="grid">
+<label>姓名<input id="gName" value="命主"></label>
+<label>性別<select id="gGender"><option value="1">男（乾造）</option><option value="0">女（坤造）</option></select></label>
+<label>出生日期<input type="date" id="gDate" value="2026-04-17"></label>
+<label>出生時間<input type="time" id="gTime" value="01:17"></label>
+<label>常用城市<select id="gCity"></select></label>
+<label>緯度（北正南負）<input id="gLat" type="number" step="0.0001" value="45.52"></label>
+<label>經度（東正西負）<input id="gLon" type="number" step="0.0001" value="-122.68"></label>
+<label>時區（依經緯度自動判定）<input id="gZone" value="America/Los_Angeles"></label>
+<label>手動 UTC 偏移（小時，可空白）<input id="gOff" type="number" step="0.25" placeholder="例 -7 或 5.5"></label>
+<label>時鐘回撥重複時段<select id="gSecond"><option value="0">第一次（夏令時間）</option><option value="1">第二次（標準時間）</option></select></label>
+<label>換日規則<select id="gRule"><option value="midnight">真太陽時午夜換日（23 時後為晚子時）</option><option value="23">23:00 換日（子初換日）</option></select></label>
+<label class="chk"><span><input type="checkbox" id="gRound"> 節氣時刻取整分（對照國立天文台／萬年曆分鐘表）</span><small class="muted">預設採 DE421 精確至秒</small></label>
+</div>
+<div class="row"><button id="gCalc" class="pri">排盤</button></div><p id="gMsg" class="muted"></p></section>
+<section class="pane on" id="gOut"></section>
+<section class="card" id="gAbout"><h2>說明：干支換日線法</h2><div class="text">
+<p>干支記日不隨國際換日線退回。本站暫以<b>東經 70°</b>為「干支換日線」：干支日序自東經 70° 起向東連續推進，繞地球一周回到東經 70°。因此東經 70°–180° 的地區（中國、台灣、日本等）與一般萬年曆相同；東經 70° 以西及西半球（歐洲、非洲、西亞、美洲）的有效經度 L = 經度 + 360°，比一般民用日期提早一日進入新的干支日，例如台灣仍在辛巳日時，美國可能已進入壬午日。</p>
+<p>計算步驟：① 出生地鐘錶時間依 IANA 時區（含歷史夏令時間）換成世界時 UT；② 干支地方時 = UT + L÷15 小時（平太陽時），再加均時差得真太陽時；③ 日柱取該真太陽時之日期干支（午夜或 23:00 換日，依設定）；④ 時支由真太陽時定，時干由日干五鼠遁起；⑤ 年柱、月柱以節氣交接的 UT 瞬間比對（不以地方日期判斷）；⑥ 大運依年干陰陽與性別定順逆，起運由出生至下一（或上一）個「節」的實際時間差推算。</p>
+<p class="muted">※ 東經 70° 是依現代中國地理範圍（最西端約東經 73°）提出的<b>研究用暫定線</b>，並非古代曆法或任何官方的歷史標準；不同經線、換日鐘點與子時派別都會影響結果，請以命例逐一驗證。本站內容僅供研究、參考與娛樂。</p></div></section>
+<footer>※ 本站內容依傳統命理規則自動生成，僅供參考與娛樂，不構成任何人生、醫療、財務或法律建議。</footer>
+</main><script type="module" src="./src/globalPage.js"></script></body></html>
