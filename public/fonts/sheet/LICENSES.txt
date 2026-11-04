@@ -1,0 +1,5 @@
+詳細命盤字型（皆為子集，並已更名以符合授權）：
+- SheetTC.ttf、name/*.ttf：Noto Serif CJK TC（Adobe / Google），SIL Open Font License 1.1
+- SheetSerif.ttf：Liberation Serif（Red Hat），SIL Open Font License 1.1
+- SheetMono.ttf：Nimbus Mono PS（URW++），AGPL-3 with font exception（字型嵌入文件不影響文件授權）
+重新產生：npm run fonts:sheet（見 tools/sheet/build_fonts.py）
