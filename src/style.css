@@ -40,4 +40,4 @@ body.sheetOn #formBox{display:none}
 #sheet .sheetwrap{background:#fff;border:1px solid var(--line);padding:2.5%;max-width:820px;margin:0 auto;box-shadow:0 1px 4px #0002}
 #sheet .sheetsvg{display:block;width:100%;height:auto}
 #sheet .grid label.chk{grid-column:span 2}@media(max-width:700px){#sheet .grid label.chk{grid-column:auto}#sheet{padding:8px}#sheet .sheetwrap{padding:1.5%}}
-body:has(#rg-nav-host) nav{top:40px} /* 共用導覽列（nav.js）高 40px */
+body:has(#rg-nav-host) nav{top:var(--rg-nav-h,calc(40px + env(safe-area-inset-top,0px)))} /* 共用導覽列（nav.js）實際高度 */
