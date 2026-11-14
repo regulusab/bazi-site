@@ -7,10 +7,11 @@ let fail=0;const ok=(c,m)=>{if(!c){fail++;console.log('✗ '+m);}};
 const io={font:async p=>fs.readFileSync('public/fonts/'+p),manifest:async()=>JSON.parse(fs.readFileSync('public/fonts/sheet/name/manifest.json')),image:async k=>fs.readFileSync('public/mingshu/'+k+'.png')};
 const flat=bs=>{const o=[];const f=b=>{if(b.t==='N')b.c.forEach(f);else if(b.x!=null)o.push(b);};bs.forEach(f);return o;};
 const LEAK=/undefined|NaN|\$\{|【】|null|\[object|（\s*）$/;
+// 範本命例為真實個人，資料放在 repo 外，找不到就略過範本比對
+const PRIV=process.env.PRIVATE_CASES||'/workspace/jiaodui/八字/private-cases/bazi-site-sample.mjs';
+const {LIU}=fs.existsSync(PRIV)?await import(PRIV):{};
 const CASES=[
- {k:'liu',f:{name:'劉沛穎',gender:0,date:'1964-05-07',time:'10:00',lon:121.56},o:{year:2011,day:'2011-09-01'},
-  exp:{P:'甲辰 己巳 丙辰 癸巳',ge:'建祿格',xi:'金水',ji:'火木',xz:'金牛',strong:true,sc:{火:20,土:21,金:3,水:7,木:9}},
-  lines:['您的格局為建祿格，會有此種現象：','依八字得知重量為：6兩','西元：2011 農曆：100年 48歲 (得分：103分)','西元：2011年9月1日  農曆：100年8月4日 (得分：91分)']},
+ ...(LIU?[LIU]:[]),
  {k:'wang',f:{name:'王先生',gender:1,date:'1962-08-08',time:'00:10',lon:121.56},o:{year:2026,day:'2026-11-14'},exp:{P:'壬寅 丁未 戊寅 壬子',strong:true}},
  {k:'male-strong',f:{name:'測試丙',gender:1,date:'2001-11-03',time:'23:40',lon:121.5},o:{year:2026,day:'2026-11-14'},exp:{strong:true}},
  {k:'west',f:{name:'測試乙',gender:0,date:'1990-01-20',time:'05:30',lon:-74},o:{year:2026,day:'2026-11-14'},exp:{}},
@@ -42,17 +43,18 @@ if(process.env.SKIP_BROWSER!=='1'){const {chromium}=await import('./qa-pw.mjs');
  const ctx=await br.newContext({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true,acceptDownloads:true,
   userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'});
  const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
- await pg.goto(BASE+'?n=%E5%8A%89%E6%B2%9B%E7%A9%8E&d=1964-05-07&t=10:00&g=0&lon=121.56#report',{waitUntil:'networkidle'});
+ const W=LIU?LIU.f:{name:'測試甲',gender:0,date:'1985-03-12',time:'14:20',lon:121.56};
+ await pg.goto(BASE+`?n=${encodeURIComponent(W.name)}&d=${W.date}&t=${W.time}&g=${W.gender}&lon=${W.lon}#report`,{waitUntil:'networkidle'});
  await pg.fill('#msY','2011');await pg.fill('#msD','2011-09-01');
  await pg.locator('#msSec').scrollIntoViewIfNeeded();await pg.click('#msGo');
  await pg.waitForFunction(()=>document.querySelectorAll('#msOut .ms-H').length>40,null,{timeout:30000});
  const info=await pg.evaluate(()=>({h:document.querySelectorAll('#msOut .ms-H').length,t:document.querySelectorAll('#msOut .ms-T').length,txt:document.querySelector('#msOut').innerText,ow:document.documentElement.scrollWidth,fonts:[...document.fonts].filter(f=>f.family.includes('MingshuKai')).map(f=>f.status)}));
- ok(info.t===6,'網頁命書大標 '+info.t);ok(info.txt.includes('西元：2011 農曆：100年 48歲 (得分：103分)'),'網頁命書流年分數');ok(!/undefined|NaN|\$\{|【】/.test(info.txt),'網頁命書無未定義');
+ ok(info.t===6,'網頁命書大標 '+info.t);if(LIU)ok(info.txt.includes('西元：2011 農曆：100年 48歲 (得分：103分)'),'網頁命書流年分數');ok(!/undefined|NaN|\$\{|【】/.test(info.txt),'網頁命書無未定義');
  ok(info.ow<=392,'手機版面無橫向捲動 '+info.ow);
  await pg.waitForTimeout(1500);fs.mkdirSync(out,{recursive:true});
  await pg.locator('#msOut .ms-p1').scrollIntoViewIfNeeded();await pg.waitForTimeout(800);await pg.screenshot({path:`${out}/mobile-page1.png`});
  await pg.evaluate(()=>{const h=[...document.querySelectorAll('#msOut .ms-H')][0];h.scrollIntoView();});await pg.waitForTimeout(500);await pg.screenshot({path:`${out}/mobile-text.png`});
- for(const [btn,ext] of [['#msPdf','pdf'],['#msDoc','docx']]){const [d]=await Promise.all([pg.waitForEvent('download',{timeout:90000}),pg.click(btn)]);const f=`${out}/web-liu.${ext}`;await d.saveAs(f);
+ for(const [btn,ext] of [['#msPdf','pdf'],['#msDoc','docx']]){const [d]=await Promise.all([pg.waitForEvent('download',{timeout:90000}),pg.click(btn)]);const f=`${out}/web-demo.${ext}`;await d.saveAs(f);
   const sz=fs.statSync(f).size;ok(sz>(ext==='pdf'?500000:200000),`網頁下載 ${ext} ${sz}`);console.log('download',d.suggestedFilename(),sz);}
  ok(!errs.length,'頁面錯誤 '+errs.join(';'));await br.close();console.log('browser: 命書 H',info.h,'fonts',info.fonts.join(','));}
 console.log(fail?`命書 QA 失敗 ${fail} 項`:'命書 QA 全部通過');process.exit(fail?1:0);
