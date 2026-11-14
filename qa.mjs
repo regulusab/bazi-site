@@ -1,4 +1,4 @@
-import {chromium} from '/home/box/.npm/_npx/705bc6b22212b352/node_modules/playwright/index.mjs';
+import {chromium} from './qa-pw.mjs';
 const BASE=process.argv[2]||'https://regulusab.github.io/bazi-site/';
 const R=[];const ok=(n,c,x='')=>{R.push([c?'PASS':'FAIL',n,x]);};
 const b=await chromium.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});

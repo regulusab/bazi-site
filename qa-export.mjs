@@ -1,4 +1,4 @@
-import {chromium} from '/home/box/.npm/_npx/705bc6b22212b352/node_modules/playwright/index.mjs';
+import {chromium} from './qa-pw.mjs';
 import {execSync} from 'child_process';import fs from 'fs';
 const BASE=process.argv[2]||'https://regulusab.github.io/bazi-site/';const OUT='/tmp/qaexp';fs.mkdirSync(OUT,{recursive:true});
 const R=[];const ok=(n,c,x='')=>R.push([c?'PASS':'FAIL',n,x]);

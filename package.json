@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node test.mjs && node tests/sheet.test.mjs",
-    "qa": "node qa.mjs && node qa-export.mjs && node qa-global.mjs && node qa-sheet.mjs",
+    "qa": "node qa.mjs && node qa-export.mjs && node qa-global.mjs && node qa-sheet.mjs && node qa-mingshu.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
