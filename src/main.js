@@ -105,7 +105,7 @@ function renderPick(){if(!chart)return;const c=chart,[lab,keys]=PURP[$('#pP').va
  $('#pOut').innerHTML=`<p>${lab}（${$('#pS').value} 至 ${$('#pE').value}）：共 ${rows.length} 個合適日子（已排除宜忌不符、${$('#pHd').checked?'黑道日、':''}沖命主日支 ${c.pillars[2].zhi} 或年支 ${c.pillars[0].zhi} 之日）。★ 為與命主相合或天干屬喜用。</p>
  <div class="scroll"><table><tr><th>日期</th><th>農曆</th><th>日柱</th><th>建除／值神</th><th>沖煞</th><th>宜</th><th>忌</th></tr>${rows.map(r=>`<tr class="${r.he?'good':''}"><td>${r.he?'★ ':''}${r.sol.toYmd()}<br><small>週${'日一二三四五六'[r.sol.getWeek()]}</small></td><td>${r.i.lunar}</td><td>${gzH(r.i.gz)}</td><td>${r.i.zhixing}／${r.i.tianshen}</td><td>沖${r.i.chong}<br>煞${r.i.sha}</td><td style="text-align:left"><small>${r.i.yi.join(' ')}</small></td><td style="text-align:left"><small>${r.i.ji.join(' ')}</small></td></tr>`).join('')}</table></div>`;}
 function run(){try{chart=buildChart(readForm());}catch(e){alert('資料有誤：'+e.message);return;}
- $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);renderDaily(chart,$,gzH,dl,readForm);if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();addBars();}
+ $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);initMingshu();renderDaily(chart,$,gzH,dl,readForm);if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();addBars();}
 {const q=new URLSearchParams(location.search);if(q.get('d'))$('#date').value=q.get('d');if(q.get('t'))$('#time').value=q.get('t');if(q.get('g'))$('#gender').value=q.get('g');if(q.get('n'))$('#name').value=q.get('n');if(q.get('lon'))$('#lon').value=q.get('lon');if(q.get('dst'))$('#dst').checked=true;}
 renderYearPane();renderMatchPane();renderPickPane();refreshP();$('#calc').onclick=run;
 
@@ -154,3 +154,17 @@ function saveBlob(blob,name){const u=URL.createObjectURL(blob);const a=document.
  if(q.get('ps')){$('#pP').value=q.get('pp')||'0';$('#pS').value=q.get('ps');$('#pE').value=q.get('pe')||q.get('ps');$('#pHd').checked=q.get('ph')!=='0';}
  run();if(q.get('md'))renderMatch();if(q.get('ps'))renderPick();addBars();}
 const h=location.hash.slice(1);if(h)document.querySelector(`#tabs [data-t=${h}]`)?.click();
+
+// ---- 十一、命書範例（延遲載入）
+var msR=null;function msMod(){return import('./mingshu/web.js');}
+async function msMake(){const box=$('#msOut');if(!box||!chart)return null;const msg=$('#msMsg');msg.textContent='命書產生中…';
+ try{const M=await msMod();const y=Number($('#msY').value)||new Date().getFullYear();
+  msR=M.makeMingshu(readForm(),{year:y,day:$('#msD').value||undefined,blood:$('#msB').value});M.showMingshu(box,msR);
+  msg.textContent=`命書已產生（流年 ${y} 年）。可下載 A4 PDF 或 Word（可編輯文字）。`;}catch(e){msR=null;msg.textContent='命書產生失敗：'+e.message;}return msR;}
+function initMingshu(){const sec=$('#msSec');if(!sec)return;msR=null;$('#msGo').onclick=msMake;
+ const dlK=async k=>{const msg=$('#msMsg');try{if(!msR)await msMake();if(!msR)return;msg.textContent=k==='pdf'?'產生 PDF 中（首次需載入字型，約 1.3 MB）…':'產生 Word 中…';
+  const M=await msMod();const t=`${chart.name} 命書`;const blob=k==='pdf'?(await M.mingshuPdfBlob(msR,t)).blob:await M.mingshuWordBlob(msR,t);
+  const n=fileBase(chart.name,'命書')+(k==='pdf'?'.pdf':'.docx');saveBlob(blob,n);msg.textContent='已下載 '+n;}catch(e){msg.textContent='輸出失敗：'+e.message;}};
+ $('#msPdf').onclick=()=>dlK('pdf');$('#msDoc').onclick=()=>dlK('docx');
+ ['msY','msD','msB'].forEach(id=>{$('#'+id).onchange=()=>{if(msR)msMake();};});
+ if('IntersectionObserver' in window){const ob=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){ob.disconnect();if(!msR)msMake();}},{rootMargin:'600px'});ob.observe(sec);}else msMake();}

@@ -41,3 +41,15 @@ body.sheetOn #formBox{display:none}
 #sheet .sheetsvg{display:block;width:100%;height:auto}
 #sheet .grid label.chk{grid-column:span 2}@media(max-width:700px){#sheet .grid label.chk{grid-column:auto}#sheet{padding:8px}#sheet .sheetwrap{padding:1.5%}}
 body:has(#rg-nav-host) nav{top:var(--rg-nav-h,calc(40px + env(safe-area-inset-top,0px)))} /* 共用導覽列（nav.js）實際高度 */
+/* 十一、命書範例 */
+.ms-ctl{flex-wrap:wrap;gap:8px;align-items:flex-end}.ms-ctl input,.ms-ctl select{max-width:150px}
+.ms-doc{font-family:MingshuKai,'BiauKai','DFKai-SB','Kaiti TC','STKaiti',serif;font-weight:600;line-height:1.65;max-width:780px;margin:0 auto;color:#000;font-size:15px;overflow-wrap:anywhere}
+.ms-doc .ms-T{text-align:center;text-decoration:underline;font-size:22px;margin:2em 0 .6em;color:#000;border:0}
+.ms-doc .ms-H{color:#0000ff;font-size:18px;margin:1.2em 0 .4em}
+.ms-doc .ms-S{color:#008000;margin:.6em 0 .2em .5em}
+.ms-doc .ms-R{color:#ff0000;margin:.3em 0 .2em 1.5em}
+.ms-doc .ms-P{margin:.35em 0 .35em 1.5em}
+.ms-doc .ms-N{display:flex;margin:.5em 0 .5em .5em}.ms-doc .ms-n{flex:0 0 1.6em}.ms-doc .ms-N>div{flex:1;min-width:0}.ms-doc .ms-N .ms-P,.ms-doc .ms-N .ms-R{margin-left:0}
+.ms-doc .ms-img{display:block;max-width:100%;height:auto;margin:.8em auto}
+.ms-doc .ms-svg svg{display:block;width:100%;height:auto}
+.ms-doc .ms-tbl{border-collapse:collapse;margin:.4em auto;width:auto}.ms-doc .ms-tbl td{border:1px solid #000;padding:4px 14px;text-align:center}.ms-doc .ms-tbl td.hl{background:#ffe0e0;color:#f00}

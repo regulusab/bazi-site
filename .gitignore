@@ -3,3 +3,4 @@ dist-single/
 dist/
 screenshots/
 *.zip
+*.tmp.mjs
