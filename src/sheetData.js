@@ -1,5 +1,5 @@
 // 詳細命盤（星僑八字論斷格式）資料推算。純邏輯：瀏覽器與 Node 皆可用。
-// 規則由「範本甲／範本乙」兩張星僑範本反推，並以 王先生（1962-08-08 00:10）Python 版逐欄驗證。
+// 規則由兩張星僑範本反推，並以 王先生（1962-08-08 00:10）Python 版逐欄驗證。
 import LJ from 'lunar-javascript';
 import {JIE,TERMS,inRange,yearMonthPillar,prevJieIdx} from './terms.js';
 import {wallToUt,zoneOffsetMin,dayIdx,gz as gz60,LINE} from './global.js';

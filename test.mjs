@@ -37,10 +37,15 @@ const {globalChart}=await import('./src/global.js');const tz=(await import('tz-l
 const G=(y,m,d,hh,mi,lat,lon,o={})=>globalChart({y,m,d,hh,mi,lat,lon,gender:1,zone:tz(lat,lon),roundJie:true,...o});
 const chk=(name,c,e)=>{const bad=Object.entries(e).filter(([k,v])=>{const got=k.split('.').reduce((a,b)=>a[b],c);return got!==v;}).map(([k,v])=>`${k}=${k.split('.').reduce((a,b)=>a[b],c)}≠${v}`);console.log(name,bad.length?'FAIL '+bad.join('; '):'PASS');if(bad.length)process.exitCode=1;};
 const pj=p=>[p.year,p.month,p.day,p.hour].join(' ');
-const a=G(2000,1,1,0,0,45.52,-122.68);a.mainS=pj(a.main);a.ts=new Date(a.trueG).toISOString().slice(11,16);
-chk('全球 波特蘭 2000-01-01 00:00',a,{mainS:'丙午 壬辰 壬戌 庚子','civil.day':'辛酉',clockHour:'辛丑',ts:'00:06','nextJie.local':'2026-05-05 04:49','trad.diffText':'18日3時32分','trad.text':'6年0月17日16時',startA:'2032-05-04 17:17',startB:'2032-04-02 17:17','dayun.0.gz':'癸巳',off:-420});
-const b=G(2000,1,2,0,0,45.52,-122.68);b.mainS=pj(b.main);
-chk('全球 波特蘭 2000-01-02 00:00',b,{mainS:'丙午 戊戌 庚申 壬午','civil.day':'己未',clockHour:'癸未','nextJie.local':'2026-11-07 01:52','nextJie.off':'UTC−08:00','trad.diffText':'25日13時51分','trad.text':'8年6月9日6時',startA:'2035-04-21 19:01',startB:'2035-03-08 18:01','dayun.0.gz':'己亥'});
+// 虛構命例（波特蘭）：近午夜換日、逆排大運；冬令時間
+const a=G(1993,9,8,1,20,45.52,-122.68);a.mainS=pj(a.main);a.ts=new Date(a.trueG).toISOString().slice(11,16);
+chk('全球 波特蘭 虛構 1993-09-08 01:20',a,{mainS:'癸酉 辛酉 癸巳 壬子','civil.day':'壬辰',clockHour:'癸丑',ts:'00:11','nextJie.local':'1993-09-07 08:08','trad.diffText':'0日17時12分','trad.text':'0年2月26日0時',startA:'1993-12-04 01:20',startB:'1993-12-03 00:20','dayun.0.gz':'庚申',off:-420,'warn.length':1});
+const b=G(2001,11,20,15,30,45.52,-122.68);b.mainS=pj(b.main);
+chk('全球 波特蘭 虛構 2001-11-20 15:30',b,{mainS:'辛巳 己亥 戊子 庚申','civil.day':'丁亥',clockHour:'庚申','nextJie.local':'2001-11-07 00:37','nextJie.off':'UTC−08:00','trad.diffText':'13日14時53分','trad.text':'4年6月14日10時',startA:'2006-06-04 01:30',startB:'2006-05-13 02:30','dayun.0.gz':'戊戌',off:-480});
+// 星僑範本兩例（真實個人）放在 repo 外，找不到就略過
+{const fs=await import('fs'),path=await import('path');const PL=process.env.PRIVATE_LUO||(process.env.PRIVATE_CASES?path.join(path.dirname(process.env.PRIVATE_CASES),'bazi-site-luo.mjs'):'/workspace/jiaodui/八字/private-cases/bazi-site-luo.mjs');
+ if(fs.existsSync(PL)){const {GLOBAL_CASES}=await import(PL);for(const g of GLOBAL_CASES){const c=G(...g.a);c.mainS=pj(c.main);c.ts=new Date(c.trueG).toISOString().slice(11,16);chk('全球 '+g.name+'（私有命例）',c,g.exp);}}
+ else console.log('全球 私有命例 SKIP（找不到 '+PL+'）');}
 const B=await import('./src/bazi.js');
 for(const t of ['2026-11-03 12:00','1990-01-01 12:00','1962-08-08 08:40','2024-02-04 16:30']){const [ds,ts]=t.split(' ');const [y,m,d]=ds.split('-').map(Number),[hh,mi]=ts.split(':').map(Number);
  const g=G(y,m,d,hh,mi,25.033,121.565,{roundJie:false});const n=B.buildChart({name:'t',gender:1,date:ds,time:ts});const ref=n.pillars.map(p=>p.gan+p.zhi).join(' ');

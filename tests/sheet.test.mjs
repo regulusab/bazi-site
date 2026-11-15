@@ -1,5 +1,5 @@
-// 詳細命盤回歸測試：王先生（與 Python 版逐欄、逐字形比對）＋範本甲／範本乙（與星僑原單比對）
-import fs from 'fs';
+// 詳細命盤回歸測試：王先生（與 Python 版逐欄、逐字形比對）＋星僑範本兩例（與星僑原單比對；真實個人，資料在 repo 外，找不到就略過）
+import fs from 'fs';import path from 'path';
 import {sheetData} from '../src/sheetData.js';
 import {layoutSheet} from '../src/sheetLayout.js';
 const J=f=>JSON.parse(fs.readFileSync(new URL(f,import.meta.url)));
@@ -15,18 +15,21 @@ E.glyphs.forEach((g,i)=>{const h=G[i];if(!h||h[2]!==g[2]||h[3]!==g[3]){same=fals
 // 唯一差異：Python 以 PIL 量 Latin 字寬含 '11' 字距調整，網頁版不做字距調整（0.63 範本單位 ≈ 0.08 mm）
 chk('王先生 版面字形 = Python 版（位置誤差 < 1 單位）',same&&maxd<1,`${G.length} 字形，最大誤差 ${maxd.toFixed(3)}`);
 chk('天干皆為「壬」非「王」（王只出現在姓名）',G.filter(g=>g[2]==='王').length===1);
-// 2) 範本甲／範本乙：波特蘭出生，星僑原單轉錄（tests/luo-sheets.json）
-const S=J('./luo-sheets.json');const BLANK=new Set(['serial','mingge','wang']);
-const norm=(k,v)=>k==='shensha12'?v.map(a=>a.join('')):k==='yong'?v.map(r=>[r[0],r[2],r[3]]):v;
-const KNOWN={p1:{chusheng:'出生後6年0個月又18天交大運',meifeng:'每逢壬或丁年立夏後1天交大運'}};
-for(const [pg,d,t,bz] of [['p1','2000-01-01','00:00','丙午 壬辰 壬戌 庚子'],['p2','2000-01-02','00:00','丙午 戊戌 庚申 壬午']]){
- const r=sheetData({name:S[pg].name,gender:1,date:d,time:t,zone:'America/Los_Angeles',lon:-122.68,listDate:'2026-11-04'});
- chk(`${S[pg].name} 八字 ${bz}`,[...r.W.bazi].reverse().join(' ')===bz);
- const keys=Object.keys(S[pg]).filter(k=>k in r.W&&!BLANK.has(k));const bad=[];
- for(const k of keys){const kn=KNOWN[pg]?.[k];if(kn){chk(`${S[pg].name} ${k}（已知差 1 天：星僑 ${S[pg][k]}）`,r.W[k]===kn,r.W[k]);continue;}
-  if(JSON.stringify(norm(k,r.W[k]))!==JSON.stringify(norm(k,S[pg][k])))bad.push(k);}
- chk(`${S[pg].name} 可推導欄位與星僑原單一致`,bad.length===0,`${keys.length} 欄${bad.length?'，不同：'+bad.join(','):''}`);
- chk(`${S[pg].name} 版面可排`,layoutSheet(r.W).length>900);}
+// 2) 星僑範本兩例：波特蘭出生，星僑原單轉錄（私有資料 bazi-site-luo.mjs / bazi-site-luo-sheets.json）
+const PL=process.env.PRIVATE_LUO||(process.env.PRIVATE_CASES?path.join(path.dirname(process.env.PRIVATE_CASES),'bazi-site-luo.mjs'):'/workspace/jiaodui/八字/private-cases/bazi-site-luo.mjs');
+if(fs.existsSync(PL)){const {SHEETS:S,SHEET_CASES}=await import(PL);const BLANK=new Set(['serial','mingge','wang']);
+ const norm=(k,v)=>k==='shensha12'?v.map(a=>a.join('')):k==='yong'?v.map(r=>[r[0],r[2],r[3]]):v;
+ for(const c of SHEET_CASES){const {pg,bz}=c;
+  const r=sheetData({name:c.name,gender:1,date:c.date,time:c.time,zone:c.zone,lon:c.lon,listDate:c.listDate});
+  chk(`${pg} 八字 ${bz}`,[...r.W.bazi].reverse().join(' ')===bz);
+  const keys=Object.keys(S[pg]).filter(k=>k in r.W&&!BLANK.has(k));const bad=[];
+  for(const k of keys){const kn=c.known[k];if(kn){chk(`${pg} ${k}（已知差 1 天：星僑 ${S[pg][k]}）`,r.W[k]===kn,r.W[k]);continue;}
+   if(JSON.stringify(norm(k,r.W[k]))!==JSON.stringify(norm(k,S[pg][k])))bad.push(k);}
+  chk(`${pg} 可推導欄位與星僑原單一致`,bad.length===0,`${keys.length} 欄${bad.length?'，不同：'+bad.join(','):''}`);
+  chk(`${pg} 版面可排`,layoutSheet(r.W).length>900);}}
+else console.log('SKIP 星僑範本兩例（找不到私有資料 '+PL+'）');
+// 範本 recs 已去識別：不含命主資料
+{const T=(await import('../src/sheet-template.js')).default;const ok=T.recs.every(r=>!('text' in r));chk('sheet-template recs 無原文欄位',ok);}
 // 3) 其他邊界：台灣夏令時間、女命、閏月、晚子時
 const d1=sheetData({name:'測',gender:0,date:'1979-07-15',time:'12:30',listDate:'2026-01-01'});chk('1979 台灣夏令時間自動扣 60 分',d1.info.dst===60);
 const d2=sheetData({name:'測',gender:0,date:'2023-04-01',time:'23:30',listDate:'2026-01-01'});chk('2023 閏二月 + 晚子時換日干',d2.W.lunar_tail.includes('閏')&&/^[甲乙丙丁戊己庚辛壬癸]子$/.test(d2.W.bazi[0]),JSON.stringify([d2.W.lunar_tail,d2.W.bazi]));

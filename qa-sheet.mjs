@@ -1,6 +1,6 @@
 // QA：詳細命盤分頁（產生、版面比對、PDF／Word 下載）。用法：node qa-sheet.mjs [BASE_URL]
 import {chromium} from './qa-pw.mjs';
-import {execSync} from 'child_process';import fs from 'fs';
+import {execSync} from 'child_process';import fs from 'fs';import path from 'path';
 const BASE=process.argv[2]||'https://regulusab.github.io/bazi-site/';const OUT='/tmp/qasheet';fs.mkdirSync(OUT,{recursive:true});
 const R=[];const ok=(n,c,x='')=>R.push([c?'PASS':'FAIL',n,x]);
 const EXP=JSON.parse(fs.readFileSync(new URL('./tests/wang-expected.json',import.meta.url)));
@@ -36,12 +36,16 @@ if(n){const info=sh(`pdfinfo ${OUT}/w.pdf`);ok('PDF 1 page A4',/Pages:\s+1\n/.te
 n=await down('#sDocx',OUT+'/w.docx');ok('Word filename 八字論斷_王先生.docx',n==='八字論斷_王先生.docx',n);
 if(n){sh(`cd ${OUT} && rm -f w_docx.pdf && cp w.docx w_docx.docx && soffice --headless --convert-to pdf w_docx.docx >/dev/null 2>&1`);const info=sh(`pdfinfo ${OUT}/w_docx.pdf`);ok('Word opens as 1 page (LibreOffice)',/Pages:\s+1\n/.test(info));
  const img=sh(`cd ${OUT} && rm -rf dx && mkdir dx && cd dx && unzip -o -q ../w.docx && python3 -c "from PIL import Image;import glob;f=glob.glob('word/media/*')[0];print(Image.open(f).size)"`).trim();ok('Word image 600 dpi',img==='(4363, 5819)',img);}
-// 範本（波特蘭）兩例
-await setIn({sName:'範本甲',sCity:'10',sDate:'2000-01-01',sTime:'00:00',sList:'2026-11-04'});
-let note=await p.innerText('#sNote');ok('範本甲 Portland 丙午 壬辰 壬戌 庚子',note.includes('丙午 壬辰 壬戌 庚子')&&note.includes('換日線'),note);
-let txt=(await p.$$eval('#sOut svg text',ts=>ts.map(t=>t.textContent).join('')));ok('範本甲 起運 6年0個月又18天/立夏後1天 (星僑: 17天/後0天, DE421 vs 星僑 term time)',txt.includes('出生後6年0個月又18天交大運')&&txt.includes('立夏後1天'),'');
-await setIn({sName:'範本乙',sDate:'2000-01-02',sTime:'00:00'});note=await p.innerText('#sNote');txt=(await p.$$eval('#sOut svg text',ts=>ts.map(t=>t.textContent).join('')));
-ok('範本乙 Portland 丙午 戊戌 庚申 壬午',note.includes('丙午 戊戌 庚申 壬午'),note);ok('範本乙 起運 8年6個月又9天 / 穀雨後2天',txt.includes('出生後8年6個月又9天交大運')&&txt.includes('每逢乙或庚年穀雨後2天交大運'));
+// 波特蘭虛構命例（干支換日線）
+await setIn({sName:'範例乾造',sCity:'10',sDate:'1993-09-08',sTime:'01:20',sList:'2026-11-04'});
+let note=await p.innerText('#sNote');ok('虛構 Portland 癸酉 辛酉 癸巳 壬子',note.includes('癸酉 辛酉 癸巳 壬子')&&note.includes('換日線'),note);
+let txt=(await p.$$eval('#sOut svg text',ts=>ts.map(t=>t.textContent).join('')));ok('虛構 Portland 起運 0年2個月又26天 / 小雪後13天',txt.includes('出生後0年2個月又26天交大運')&&txt.includes('小雪後13天'));
+// 星僑範本兩例（真實個人）：資料在 repo 外，找不到就略過
+{const PL=process.env.PRIVATE_LUO||(process.env.PRIVATE_CASES?path.join(path.dirname(process.env.PRIVATE_CASES),'bazi-site-luo.mjs'):'/workspace/jiaodui/八字/private-cases/bazi-site-luo.mjs');
+ if(fs.existsSync(PL)){const {QA_SHEET}=await import(PL);for(const [i,c] of QA_SHEET.entries()){const o={sName:c.name,sDate:c.date,sTime:c.time};if(c.city)o.sCity=c.city;if(c.list)o.sList=c.list;await setIn(o);
+  note=await p.innerText('#sNote');txt=(await p.$$eval('#sOut svg text',ts=>ts.map(t=>t.textContent).join('')));
+  ok(`私有例 ${i+1} ${c.bz}`,note.includes(c.bz)&&c.noteHas.every(x=>note.includes(x)),note);ok(`私有例 ${i+1} ${c.label}`,c.txtHas.every(x=>txt.includes(x)));}}
+ else console.log('SKIP 星僑範本兩例（找不到 '+PL+'）');}
 // 罕用姓名字（需載入姓名字型分檔）
 await setIn({sName:'鍾曉彤',sCity:'0',sDate:'1985-03-21',sTime:'23:30'});n=await down('#sPdf',OUT+'/z.pdf');
 ok('rare-name PDF no missing glyphs',n&&!(await p.innerText('#sMsg')).includes('缺字')&&sh(`pdftotext ${OUT}/z.pdf -`).replace(/\s/g,'').includes('鍾曉彤'),await p.innerText('#sMsg'));
