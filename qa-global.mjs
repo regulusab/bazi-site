@@ -7,9 +7,13 @@ const ctx=await b.newContext({acceptDownloads:true,permissions:['clipboard-read'
 const errs=[];const pg=async(u,vp)=>{const p=await ctx.newPage();if(vp)await p.setViewportSize(vp);p.on('pageerror',e=>errs.push(e.message));p.on('dialog',d=>d.accept());await p.goto(u);await p.waitForTimeout(1500);return p;};
 const cells=async p=>(await p.locator('#gOut .gcols table').allInnerTexts()).map(t=>t.split('\n').pop().replace(/\s/g,''));
 let p=await pg(BASE+'index.html');ok('main nav link to global.html',await p.locator('nav a[href="./global.html"]').count()===1);await p.click('nav a[href="./global.html"]');await p.waitForTimeout(1500);
-let c=await cells(p);ok('Portland default (fictional) 癸酉辛酉癸巳壬子',c[0]==='癸酉辛酉癸巳壬子',c.join('|'));ok('Portland default civil day 壬辰',c[1].slice(4,6)==='壬辰',c[1]);
-let t=await p.locator('#gOut').innerText();ok('clock hour 癸丑 shown',t.includes('時柱為 癸丑'));ok('calc panel (UT/EoT/L)',t.includes('1993-09-08 08:20:00 UTC')&&t.includes('237.3200')&&t.includes('均時差'));ok('boundary warning near midnight',t.includes('距午夜換日'));
+let c=await cells(p);ok('Portland default clock (fictional) 癸酉辛酉癸巳癸丑',c[0]==='癸酉辛酉癸巳癸丑',c.join('|'));ok('Portland default civil day 壬辰',c[1].slice(4,6)==='壬辰',c[1]);ok('toggle default is 鐘錶時間',await p.inputValue('#gTimeMode')==='clock');
+let t=await p.locator('#gOut').innerText();ok('clock hour 癸丑 shown',t.includes('時柱為 癸丑')||t.includes('鐘錶時柱為 癸丑'));ok('calc panel (UT/EoT/L)',t.includes('1993-09-08 08:20:00 UTC')&&t.includes('237.3200')&&t.includes('均時差'));
 ok('大運 庚申 + both conventions',t.includes('庚申')&&t.includes('三日折一年')&&t.includes('× 120'));
+// toggle to true solar
+await p.selectOption('#gTimeMode','solar');await p.click('#gCalc');await p.waitForTimeout(300);c=await cells(p);t=await p.locator('#gOut').innerText();
+ok('Portland solar 癸酉辛酉癸巳壬子',c[0]==='癸酉辛酉癸巳壬子',c.join('|'));ok('solar label shown',t.includes('真太陽時'));ok('solar boundary warning near midnight',t.includes('距午夜換日'));
+await p.selectOption('#gTimeMode','clock');await p.click('#gCalc');await p.waitForTimeout(300);
 // rounding toggle reproduces notes
 await p.check('#gRound');await p.click('#gCalc');await p.waitForTimeout(300);t=await p.locator('#gOut').innerText();ok('round-minute: 1993-12-03 00:20 & 1993-12-04 01:20',t.includes('1993-12-03 00:20')&&t.includes('1993-12-04 01:20'));
 // case 2
@@ -24,7 +28,7 @@ const url=await p.evaluate(()=>window.__gState());await p.click('#gOut .xbar [da
 const p2=await pg(url);c=await cells(p2);ok('share link round-trip',c[0]==='辛巳己亥戊子庚申'&&(await p2.isChecked('#gRound')),c[0]);
 // 星僑範本兩例（真實個人）：資料在 repo 外，找不到就略過
 {const PL=process.env.PRIVATE_LUO||(process.env.PRIVATE_CASES?path.join(path.dirname(process.env.PRIVATE_CASES),'bazi-site-luo.mjs'):'/workspace/jiaodui/八字/private-cases/bazi-site-luo.mjs');
- if(fs.existsSync(PL)){const {QA_GLOBAL:Q}=await import(PL);for(const [k,q] of Object.entries(Q)){await p.fill('#gDate',q.date);await p.fill('#gTime',q.time);await p.click('#gCalc');await p.waitForTimeout(300);c=await cells(p);t=await p.locator('#gOut').innerText();
+ if(fs.existsSync(PL)){const {QA_GLOBAL:Q}=await import(PL);for(const [k,q] of Object.entries(Q)){await p.selectOption('#gTimeMode','solar');await p.fill('#gDate',q.date);await p.fill('#gTime',q.time);await p.click('#gCalc');await p.waitForTimeout(300);c=await cells(p);t=await p.locator('#gOut').innerText();
   ok(`私有例 ${k} ${q.main}`,c[0]===q.main&&c[1].slice(4,6)===q.civil&&t.includes('時柱為 '+q.clock)&&(q.has||[]).concat(q.round||[],q.ut?[q.ut]:[],q.dayun?[q.dayun]:[]).every(x=>t.includes(x)),c.join('|'));}}
  else console.log('SKIP 星僑範本兩例（找不到 '+PL+'）');}
 // presets

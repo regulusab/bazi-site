@@ -1,6 +1,9 @@
 // 全球八字試算：干支換日線（東經 70°）模型。純邏輯，瀏覽器與 Node 皆可用。
 import {JIE,inRange,yearMonthPillar,prevJieIdx} from './terms.js';
 export const LINE=70, RATIO=120;
+/** 鐘錶時間是否改用當地標準時間（去掉夏令時間）。老師已裁定：不去掉，依時鐘所示。預設 false；改 true 才扣除夏令。 */
+export const CLOCK_STRIP_DST=false;
+export function standardOffsetMin(zone,year,off){const jan=zoneOffsetMin(zone,Date.UTC(year,0,15)),jul=zoneOffsetMin(zone,Date.UTC(year,6,15));const cand=[jan,jul];if(off!=null&&off!=='')cand.push(+off);return Math.min(...cand);}
 const GAN='甲乙丙丁戊己庚辛壬癸',ZHI='子丑寅卯辰巳午未申酉戌亥';
 const H=36e5,D=864e5,p2=n=>String(n).padStart(2,'0');
 export const gz=i=>GAN[((i%10)+10)%10]+ZHI[((i%12)+12)%12];
@@ -39,11 +42,19 @@ export function globalChart(inp){const wall=Date.UTC(inp.y,inp.m-1,inp.d,inp.hh,
  const meanG=ut+L/15*H,trueG=meanG+eot*6e4; // 干支換日線法：牆鐘（日期可能比民用日期多一日）
  const meanC=ut+lon/15*H,trueC=meanC+eot*6e4; // 一般：實際經度
  const rule=inp.rule==='23'?'23':'midnight';
- const pillarsAt=(tw)=>{const dt=new Date(tw);const h=dt.getUTCHours()+dt.getUTCMinutes()/60+dt.getUTCSeconds()/3600;let di=dayIdx(tw);const zi=hourIdx(h);
+ const mode=inp.timeMode==='clock'?'clock':'solar'; // 預設 solar，維持舊行為
+ const fixed=inp.fixedOffMin!=null&&inp.fixedOffMin!=='';
+ const stdOff=fixed?off:(CLOCK_STRIP_DST?standardOffsetMin(inp.zone,inp.y,off):off);
+ const dstMin=off-stdOff;const stripped=mode==='clock'&&!fixed&&CLOCK_STRIP_DST&&dstMin!==0;
+ const stdWall=ut+stdOff*6e4; // 當地標準時間牆鐘
+ const pillarsAt=(tw,shift=0)=>{const dt=new Date(tw);const h=dt.getUTCHours()+dt.getUTCMinutes()/60+dt.getUTCSeconds()/3600;let di=(dayIdx(tw)+shift)%60;const zi=hourIdx(h);
   let hsDay=di;if(h>=23){if(rule==='23')di=(di+1)%60;hsDay=(dayIdx(tw)+1)%60;} // 23 點後：子時時干依次日（晚子時）
   return {day:gz(di),dayI:di,hour:GAN[hourStem(hsDay,zi)]+ZHI[zi],h};};
- const G=pillarsAt(trueG),C=pillarsAt(trueC);
- const clockWall=wall;const ch=new Date(clockWall).getUTCHours()+new Date(clockWall).getUTCMinutes()/60;const czi=hourIdx(ch);
+ const Gsolar=pillarsAt(trueG),Csolar=pillarsAt(trueC);
+ const shift=lon<LINE?1:0;
+ const Gclock=pillarsAt(stdWall,shift),Cclock=pillarsAt(stdWall,0);
+ const G=mode==='clock'?Gclock:Gsolar,C=mode==='clock'?Cclock:Csolar;
+ const clockWall=mode==='clock'?stdWall:wall;const ch=new Date(clockWall).getUTCHours()+new Date(clockWall).getUTCMinutes()/60;const czi=hourIdx(ch);
  const clockHour=GAN[hourStem(ch>=23?(G.dayI+(rule==='23'?0:1))%60:G.dayI,czi)]+ZHI[czi];
  const tpe=ut+8*H;if(!inRange(tpe))throw new Error('出生時刻超出 DE421 節氣表範圍（1900–2050）');
  const ym=yearMonthPillar(tpe);
@@ -58,13 +69,14 @@ export function globalChart(inp){const wall=Date.UTC(inp.y,inp.m-1,inp.d,inp.hh,
   dayun.push({gz:gz(mI+(forward?k+1:-(k+1))),tradStart:fmtW(aW),tradAge:trad.Y+10*k,x120Start:b!=null?fmtW(toLocal(b)):'—',x120Off:b!=null?offTxt(zoneOffsetMin(inp.zone,b)):'',jie:seq[k]?seq[k].name+' '+fmtW(toLocal(seq[k].ut),true):''});}
  // 交界警示
  const warn=[];const near=(h,b)=>{const x=(((h-b)%24)+24)%24;return Math.min(x,24-x)<0.25;};
- for(const b of [1,3,5,7,9,11,13,15,17,19,21,23])if(near(G.h,b)){warn.push(`真太陽時 ${fmtW(trueG).slice(11)} 距時辰交界 ${p2(b)}:00 不到 15 分鐘，時柱可能改變`);break;}
- if(near(G.h,0))warn.push(`真太陽時距午夜換日不到 15 分鐘，日柱可能改變`);if(rule==='23'&&near(G.h,23))warn.push('真太陽時距 23:00 換日不到 15 分鐘');
+ const usedH=G.h,usedLabel=mode==='clock'?'鐘錶時間':'真太陽時',usedFmt=mode==='clock'?fmtW(stdWall):fmtW(trueG);
+ for(const b of [1,3,5,7,9,11,13,15,17,19,21,23])if(near(usedH,b)){warn.push(`${usedLabel} ${usedFmt.slice(11)} 距時辰交界 ${p2(b)}:00 不到 15 分鐘，時柱可能改變`);break;}
+ if(near(usedH,0))warn.push(`${usedLabel}距午夜換日不到 15 分鐘，日柱可能改變`);if(rule==='23'&&near(usedH,23))warn.push(`${usedLabel}距 23:00 換日不到 15 分鐘`);
  const jPrev=JIE[i],jNext=JIE[i+1];for(const j of [jPrev,jNext])if(Math.abs(j.ms-tpe)<15*6e4)warn.push(`出生距 ${j.name} 交節不到 15 分鐘，年／月柱可能改變`);
  if(Math.abs(lon-LINE)<1)warn.push('出生地經度接近東經 70° 干支換日線，日柱依線之東西兩側不同');
  if(amb)warn.push(`當地時鐘回撥，${fmtW(wall)} 出現兩次（${amb.map(u=>offTxt(Math.round((wall-u)/6e4))).join(' / ')}），目前採${inp.second?'第二次（標準時間）':'第一次（夏令時間）'}`);
  if(gap)warn.push('當地時鐘撥快，此鐘點不存在（夏令時間開始），已按撥快前偏移推算，請核對出生紀錄');
- return {wall,ut,off,zone:inp.zone,lon,lat:+inp.lat,east,L,eot,meanG,trueG,meanC,trueC,rule,amb,gap,
-  main:{year:ym.year,month:ym.month,day:G.day,hour:G.hour},civil:{year:ym.year,month:ym.month,day:C.day,hour:C.hour},clockHour,civilClockDay:gz(dayIdx(wall)),
+ return {wall,ut,off,stdOff,stdWall,dstMin,dstStripped:stripped,timeMode:mode,zone:inp.zone,lon,lat:+inp.lat,east,L,eot,meanG,trueG,meanC,trueC,rule,amb,gap,
+  main:{year:ym.year,month:ym.month,day:G.day,hour:G.hour},civil:{year:ym.year,month:ym.month,day:C.day,hour:C.hour},clockHour,solarHour:Gsolar.hour,solarDay:Gsolar.day,civilClockDay:gz(dayIdx(mode==='clock'?stdWall:wall)),
   jieNow:{name:jPrev.name,local:fmtW(toLocal(jPrev.ms-8*H),true)},forward,nextJie:{name:seq[0].name,local:fmtW(toLocal(seq[0].ut)),off:offTxt(zoneOffsetMin(inp.zone,seq[0].ut)),utc:fmtW(seq[0].ut,true)},
   diffMs:diff,trad,startA:fmtW(startA),startB:fmtW(toLocal(ut+diff*RATIO)),dayun,warn};}

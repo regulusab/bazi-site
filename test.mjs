@@ -55,3 +55,65 @@ const t=G(2026,11,3,12,0,25.033,121.565);chk('全球 台北 2026-11-03 辛巳日
 const amb=globalChart({y:2026,m:11,d:1,hh:1,mi:30,lat:45.52,lon:-122.68,gender:1,zone:'America/Los_Angeles'});const amb2=globalChart({y:2026,m:11,d:1,hh:1,mi:30,lat:45.52,lon:-122.68,gender:1,zone:'America/Los_Angeles',second:true});
 chk('全球 DST 回撥判定',{a:!!amb.amb,o1:amb.off,o2:amb2.off},{a:true,o1:-420,o2:-480});
 }
+
+// ---- 鐘錶時間／真太陽時（引擎預設仍為真太陽時；介面另傳 timeMode:'clock'）----
+{
+const {buildChart,trueSolar}=await import('./src/bazi.js');
+const {globalChart,CLOCK_STRIP_DST}=await import('./src/global.js');
+const {sheetData}=await import('./src/sheetData.js');
+const pj=c=>c.pillars.map(p=>p.gan+p.zhi).join(' ');
+const g=globalChart;const tz='Asia/Taipei';
+if(CLOCK_STRIP_DST)throw new Error('CLOCK_STRIP_DST 預設應為 false（老師裁定：不去掉夏令時間）');
+// 預設行為不變：不傳 timeMode 仍為真太陽時
+const def=buildChart({name:'t',gender:1,date:'1988-06-15',time:'09:30',lon:121.56,zone:tz});
+const sol=buildChart({name:'t',gender:1,date:'1988-06-15',time:'09:30',lon:121.56,zone:tz,timeMode:'solar'});
+const clk=buildChart({name:'t',gender:1,date:'1988-06-15',time:'09:30',lon:121.56,zone:tz,timeMode:'clock'});
+if(pj(def)!==pj(sol)||def.timeMode!=='solar')throw new Error('buildChart 預設應為 solar');
+if(pj(clk)!=='戊辰 戊午 辛丑 癸巳')throw new Error('clock 1988-06-15 09:30 '+pj(clk));
+if(pj(sol)!=='戊辰 戊午 辛丑 癸巳')throw new Error('solar 1988-06-15 09:30 '+pj(sol));
+if(clk.solar.toYmdHms().slice(0,16)!=='1988-06-15 09:30')throw new Error('clock time '+clk.solar.toYmdHms());
+if(Math.abs(sol.off-trueSolar(new Date(1988,5,15,9,30),121.56).off)>1e-6)throw new Error('solar off');
+// 時辰交界：10:55 鐘錶仍為巳，真太陽時進午
+const c1055=buildChart({name:'t',gender:1,date:'1988-06-15',time:'10:55',lon:121.56,zone:tz,timeMode:'clock'});
+const s1055=buildChart({name:'t',gender:1,date:'1988-06-15',time:'10:55',lon:121.56,zone:tz,timeMode:'solar'});
+if(pj(c1055)!=='戊辰 戊午 辛丑 癸巳')throw new Error('clock 10:55 '+pj(c1055));
+if(pj(s1055)!=='戊辰 戊午 辛丑 甲午')throw new Error('solar 10:55 '+pj(s1055));
+// 年、月柱相同（非節氣交界）
+if(clk.pillars[0].gan+clk.pillars[0].zhi!==sol.pillars[0].gan+sol.pillars[0].zhi)throw new Error('year differs');
+if(clk.pillars[1].gan+clk.pillars[1].zhi!==sol.pillars[1].gan+sol.pillars[1].zhi)throw new Error('month differs');
+// 1960-07-01 台北 10:00：老師裁定鐘錶模式不去掉夏令，仍依時鐘 10:00
+const dstc=buildChart({name:'t',gender:1,date:'1960-07-01',time:'10:00',lon:121.56,zone:tz,timeMode:'clock'});
+if(dstc.dstStripped)throw new Error('1960 should NOT strip DST by default');
+if(dstc.solar.toYmdHms().slice(0,16)!=='1960-07-01 10:00')throw new Error('1960 clock should stay 10:00, got '+dstc.solar.toYmdHms());
+const dstOpt=buildChart({name:'t',gender:1,date:'1960-07-01',time:'10:00',lon:121.56,zone:tz,timeMode:'clock',stripDst:true});
+if(!dstOpt.dstStripped||dstOpt.standardTime!=='1960-07-01 09:00')throw new Error('stripDst:true should still convert 10:00→09:00 '+dstOpt.standardTime);
+// 1962 無夏令，鐘錶 00:10 不變
+const n62=buildChart({name:'t',gender:1,date:'1962-08-08',time:'00:10',zone:tz,timeMode:'clock'});
+if(n62.dstStripped)throw new Error('1962 should not strip DST');
+if(pj(n62)!=='壬寅 丁未 戊寅 壬子')throw new Error('1962 clock pillars '+pj(n62));
+// 全球引擎：預設仍為真太陽時；鐘錶＋70°E
+const G=(o)=>globalChart({y:1988,m:6,d:15,hh:9,mi:30,lat:25.033,lon:121.56,gender:1,zone:tz,...o});
+const gs=G({}),gc=G({timeMode:'clock'});
+if(gs.timeMode!=='solar')throw new Error('global default');
+if([gs.main.year,gs.main.month,gs.main.day,gs.main.hour].join(' ')!==pj(sol))throw new Error('global solar '+[gs.main.year,gs.main.month,gs.main.day,gs.main.hour].join(' '));
+if([gc.main.year,gc.main.month,gc.main.day,gc.main.hour].join(' ')!==pj(clk))throw new Error('global clock');
+if(gs.main.year!==gc.main.year||gs.main.month!==gc.main.month)throw new Error('global year/month should match');
+// 西經：鐘錶模式仍依 70°E 加一日
+const nyC=globalChart({y:1990,m:1,d:20,hh:5,mi:30,lat:40.71,lon:-74.01,gender:1,zone:'America/New_York',timeMode:'clock'});
+const nyCivil=nyC.civil.day,nyMain=nyC.main.day;
+if(nyMain===nyCivil)throw new Error('NY clock should apply 70E day+1 '+nyMain+' '+nyCivil);
+const nyS=globalChart({y:1990,m:1,d:20,hh:5,mi:30,lat:40.71,lon:-74.01,gender:1,zone:'America/New_York',timeMode:'solar'});
+if(nyS.main.day===nyS.civil.day)throw new Error('NY solar should apply 70E');
+// 詳細命盤：鐘錶預設、真太陽時可切
+const shC=sheetData({name:'t',gender:1,date:'1988-06-15',time:'09:30',zone:tz,lon:121.56,listDate:'2026-01-01'});
+const shS=sheetData({name:'t',gender:1,date:'1988-06-15',time:'10:55',zone:tz,lon:121.56,timeMode:'solar',listDate:'2026-01-01'});
+const shC2=sheetData({name:'t',gender:1,date:'1988-06-15',time:'10:55',zone:tz,lon:121.56,timeMode:'clock',listDate:'2026-01-01'});
+if(shC.info.timeMode!=='clock')throw new Error('sheet default clock');
+if([...shC.W.bazi].reverse().join(' ')!==pj(clk))throw new Error('sheet clock 09:30 '+[...shC.W.bazi].reverse().join(' '));
+if([...shC2.W.bazi].reverse().join(' ')!==pj(c1055))throw new Error('sheet clock 10:55');
+if([...shS.W.bazi].reverse().join(' ')!==pj(s1055))throw new Error('sheet solar 10:55 '+[...shS.W.bazi].reverse().join(' '));
+// 1979 夏令：鐘錶自動扣除
+const shD=sheetData({name:'t',gender:0,date:'1979-07-15',time:'12:30',zone:tz,listDate:'2026-01-01',timeMode:'clock'});
+if(shD.info.dst!==60)throw new Error('sheet 1979 dst');
+console.log('timeMode clock/solar + DST-strip + 70E PASS');
+}

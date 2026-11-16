@@ -38,11 +38,11 @@ if(n){sh(`cd ${OUT} && rm -f w_docx.pdf && cp w.docx w_docx.docx && soffice --he
  const img=sh(`cd ${OUT} && rm -rf dx && mkdir dx && cd dx && unzip -o -q ../w.docx && python3 -c "from PIL import Image;import glob;f=glob.glob('word/media/*')[0];print(Image.open(f).size)"`).trim();ok('Word image 600 dpi',img==='(4363, 5819)',img);}
 // 波特蘭虛構命例（干支換日線）
 await setIn({sName:'範例乾造',sCity:'10',sDate:'1993-09-08',sTime:'01:20',sList:'2026-11-04'});
-let note=await p.innerText('#sNote');ok('虛構 Portland 癸酉 辛酉 癸巳 壬子',note.includes('癸酉 辛酉 癸巳 壬子')&&note.includes('換日線'),note);
-let txt=(await p.$$eval('#sOut svg text',ts=>ts.map(t=>t.textContent).join('')));ok('虛構 Portland 起運 0年2個月又26天 / 小雪後13天',txt.includes('出生後0年2個月又26天交大運')&&txt.includes('小雪後13天'));
+let note=await p.innerText('#sNote');ok('虛構 Portland 鐘錶 癸酉 辛酉 癸巳 癸丑',note.includes('癸酉 辛酉 癸巳 癸丑')&&note.includes('換日線'),note);
+let txt=(await p.$$eval('#sOut svg text',ts=>ts.map(t=>t.textContent).join('')));ok('虛構 Portland 起運 0年2個月又26天 / 小雪後12天',txt.includes('出生後0年2個月又26天交大運')&&txt.includes('小雪後12天'));
 // 星僑範本兩例（真實個人）：資料在 repo 外，找不到就略過
 {const PL=process.env.PRIVATE_LUO||(process.env.PRIVATE_CASES?path.join(path.dirname(process.env.PRIVATE_CASES),'bazi-site-luo.mjs'):'/workspace/jiaodui/八字/private-cases/bazi-site-luo.mjs');
- if(fs.existsSync(PL)){const {QA_SHEET}=await import(PL);for(const [i,c] of QA_SHEET.entries()){const o={sName:c.name,sDate:c.date,sTime:c.time};if(c.city)o.sCity=c.city;if(c.list)o.sList=c.list;await setIn(o);
+ if(fs.existsSync(PL)){const {QA_SHEET}=await import(PL);for(const [i,c] of QA_SHEET.entries()){await p.check('#sStd');const o={sName:c.name,sDate:c.date,sTime:c.time};if(c.city)o.sCity=c.city;if(c.list)o.sList=c.list;await setIn(o);
   note=await p.innerText('#sNote');txt=(await p.$$eval('#sOut svg text',ts=>ts.map(t=>t.textContent).join('')));
   ok(`私有例 ${i+1} ${c.bz}`,note.includes(c.bz)&&c.noteHas.every(x=>note.includes(x)),note);ok(`私有例 ${i+1} ${c.label}`,c.txtHas.every(x=>txt.includes(x)));}}
  else console.log('SKIP 星僑範本兩例（找不到 '+PL+'）');}

@@ -2,7 +2,7 @@
 // 規則由兩張星僑範本反推，並以 王先生（1962-08-08 00:10）Python 版逐欄驗證。
 import LJ from 'lunar-javascript';
 import {JIE,TERMS,inRange,yearMonthPillar,prevJieIdx} from './terms.js';
-import {wallToUt,zoneOffsetMin,dayIdx,gz as gz60,LINE} from './global.js';
+import {wallToUt,zoneOffsetMin,dayIdx,gz as gz60,LINE,eotMin,CLOCK_STRIP_DST,standardOffsetMin} from './global.js';
 const {Solar}=LJ;
 export const G='甲乙丙丁戊己庚辛壬癸', Z='子丑寅卯辰巳午未申酉戌亥';
 const H=36e5, DAY=864e5;
@@ -77,22 +77,27 @@ export function wangxiang(E){const i=WX.indexOf(E);const st={};st[WX[i]]='旺';s
 const ANIMAL={子:'鼠',丑:'牛',寅:'虎',卯:'兔',辰:'龍',巳:'蛇',午:'馬',未:'羊',申:'猴',酉:'雞',戌:'狗',亥:'豬'};
 const ymd=ms=>{const d=new Date(ms);return [d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate()];};
 const dayNo=ms=>Math.floor(ms/DAY);
-// inp: {name, gender(1男/0女), date:'YYYY-MM-DD', time:'HH:MM', zone:IANA, fixedOffMin(null|分), useStd(扣夏令,預設 true), second(重複時段取第二次), listDate:'YYYY-MM-DD'}
+// inp: {name, gender(1男/0女), date:'YYYY-MM-DD', time:'HH:MM', zone:IANA, fixedOffMin(null|分), useStd(扣夏令,預設隨 CLOCK_STRIP_DST), timeMode('clock'|'solar',預設 clock), second(重複時段取第二次), listDate:'YYYY-MM-DD'}
 export function sheetData(inp){
  const [y,m,d]=inp.date.split('-').map(Number),[hh,mi]=(inp.time||'12:00').split(':').map(Number);const male=Number(inp.gender)===1;
  const wall=Date.UTC(y,m-1,d,hh,mi);const zone=inp.zone||'Asia/Taipei';const fixed=inp.fixedOffMin!=null&&inp.fixedOffMin!=='';
  let ut,off,amb=null,gap=false;
  if(fixed){off=+inp.fixedOffMin;ut=wall-off*6e4;}else{const r=wallToUt(zone,wall,!!inp.second);ut=r.ut;off=r.off;amb=r.ambiguous;gap=r.gap;}
  const stdOff=fixed?off:Math.min(zoneOffsetMin(zone,Date.UTC(y,0,15)),zoneOffsetMin(zone,Date.UTC(y,6,15)),off);
- const useStd=inp.useStd!==false;const dst=off-stdOff;const lOff=useStd?stdOff:off;
- const local=ut+lOff*6e4; // 排盤用當地鐘點（預設已扣夏令時間）
+ const mode=inp.timeMode==='solar'?'solar':'clock'; // sheetData 原本即鐘錶時間，預設維持 clock
+ const useStd=mode==='clock'?(inp.useStd!=null?!!inp.useStd:CLOCK_STRIP_DST):false;
+ const dst=off-stdOff;const lOff=useStd?stdOff:off;
+ const local=ut+lOff*6e4; // 排盤用當地鐘點（鐘錶模式預設已扣夏令時間）
  const tpe=ut+8*H;if(!inRange(tpe))throw new Error('出生時刻超出 DE421 節氣表範圍（1900–2050）');
  const ym=yearMonthPillar(tpe);
+ const lon=inp.lon==null||inp.lon===''?121.5654:+inp.lon;const east=lon>=LINE,L=east?lon:lon+360;
+ const shift=(inp.dayRule||'line')==='line'&&lon<LINE?1:0;
+ // 真太陽時：與全球八字相同，依干支換日線有效經度 L 加均時差；鐘錶時間：當地標準時，70° 以西日序 +1
+ const used=mode==='solar'?(ut+L/15*H+eotMin(ut)*6e4):local;
+ const usedShift=mode==='solar'?0:shift;
  const [LY,LM,LD]=ymd(local);const ld=new Date(local);
  const sol=Solar.fromYmdHms(LY,LM,LD,ld.getUTCHours(),ld.getUTCMinutes(),0);const lun=sol.getLunar();
- // 日柱、時柱：當地鐘點（預設扣夏令時間）；出生地在東經 70° 以西（含西半球）時，依干支換日線日序 +1（與星僑範本、全球八字主盤相同）
- const lon=inp.lon==null||inp.lon===''?121.5654:+inp.lon;const shift=(inp.dayRule||'line')==='line'&&lon<LINE?1:0;
- const hr=ld.getUTCHours()+ld.getUTCMinutes()/60;let di=(dayIdx(local)+shift)%60;const zi=Math.floor((hr+1)/2)%12;const hsDay=hr>=23?(di+1)%60:di; // 23 時後為晚子時：日柱不換、時干依次日
+ const ud=new Date(used);const hr=ud.getUTCHours()+ud.getUTCMinutes()/60;let di=(dayIdx(used)+usedShift)%60;const zi=Math.floor((hr+1)/2)%12;const hsDay=hr>=23?(di+1)%60:di; // 23 時後為晚子時：日柱不換、時干依次日
  const hg=G[((hsDay%5)*2+zi)%10]+Z[zi];
  const p=[hg,gz60(di),ym.month,ym.year]; // 時 日 月 年
  const dm=p[1][0];
@@ -140,7 +145,7 @@ export function sheetData(inp){
   gongzhi:gzr,sui_zhi:suizhi(mg),
   chusheng:`出生後${QY}年${QM}個月又${QD}天交大運`,meifeng:`每逢${s1}或${s2}年${jj.name}後${N}天交大運`,
   gua,dongxi,bazhai_dir:BZ[gua]};
- const info={lon,shift,ut,off,stdOff,dst,useStd,amb,gap,zone:fixed?null:zone,local,forward,daysIn,
+ const info={lon,shift:mode==='solar'?0:shift,ut,off,stdOff,dst,useStd,timeMode:mode,amb,gap,zone:fixed?null:zone,local,used,forward,daysIn,
   prevJie:{name:prev.name,ms:jLocal(prev)},nextJie:{name:next.name,ms:jLocal(next)},target:{name:target.name,ms:jLocal(target)},
   diffMs:diff,vdays:vd,jiaoyun:jy0,jiaoyunJie:{name:jj.name,ms:jLocal(jj)},guaYear:gyear,lunarYear:lyN};
  return {W,info};}

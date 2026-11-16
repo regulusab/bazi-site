@@ -20,7 +20,7 @@ const PL=process.env.PRIVATE_LUO||(process.env.PRIVATE_CASES?path.join(path.dirn
 if(fs.existsSync(PL)){const {SHEETS:S,SHEET_CASES}=await import(PL);const BLANK=new Set(['serial','mingge','wang']);
  const norm=(k,v)=>k==='shensha12'?v.map(a=>a.join('')):k==='yong'?v.map(r=>[r[0],r[2],r[3]]):v;
  for(const c of SHEET_CASES){const {pg,bz}=c;
-  const r=sheetData({name:c.name,gender:1,date:c.date,time:c.time,zone:c.zone,lon:c.lon,listDate:c.listDate});
+  const r=sheetData({name:c.name,gender:1,date:c.date,time:c.time,zone:c.zone,lon:c.lon,listDate:c.listDate,useStd:true}); // 星僑原單採標準時間
   chk(`${pg} 八字 ${bz}`,[...r.W.bazi].reverse().join(' ')===bz);
   const keys=Object.keys(S[pg]).filter(k=>k in r.W&&!BLANK.has(k));const bad=[];
   for(const k of keys){const kn=c.known[k];if(kn){chk(`${pg} ${k}（已知差 1 天：星僑 ${S[pg][k]}）`,r.W[k]===kn,r.W[k]);continue;}
@@ -31,6 +31,7 @@ else console.log('SKIP 星僑範本兩例（找不到私有資料 '+PL+'）');
 // 範本 recs 已去識別：不含命主資料
 {const T=(await import('../src/sheet-template.js')).default;const ok=T.recs.every(r=>!('text' in r));chk('sheet-template recs 無原文欄位',ok);}
 // 3) 其他邊界：台灣夏令時間、女命、閏月、晚子時
-const d1=sheetData({name:'測',gender:0,date:'1979-07-15',time:'12:30',listDate:'2026-01-01'});chk('1979 台灣夏令時間自動扣 60 分',d1.info.dst===60);
+const d1=sheetData({name:'測',gender:0,date:'1979-07-15',time:'12:30',listDate:'2026-01-01'});chk('1979 偵測夏令 60 分且預設不扣',d1.info.dst===60&&!d1.info.useStd&&new Date(d1.info.local).getUTCHours()===12);
+const d1s=sheetData({name:'測',gender:0,date:'1979-07-15',time:'12:30',listDate:'2026-01-01',useStd:true});chk('1979 useStd 則扣為 11:30',d1s.info.useStd&&new Date(d1s.info.local).getUTCHours()===11);
 const d2=sheetData({name:'測',gender:0,date:'2023-04-01',time:'23:30',listDate:'2026-01-01'});chk('2023 閏二月 + 晚子時換日干',d2.W.lunar_tail.includes('閏')&&/^[甲乙丙丁戊己庚辛壬癸]子$/.test(d2.W.bazi[0]),JSON.stringify([d2.W.lunar_tail,d2.W.bazi]));
 console.log(fail?`${fail} FAILED`:'sheet tests: all passed');process.exit(fail?1:0);

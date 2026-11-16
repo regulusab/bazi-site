@@ -2,20 +2,22 @@ import {renderDaily} from './dailyView.js';
 import {buildReport,rateRow,dyEval} from './report.js';
 import {dailyRows,lifeToCel,fmt,parseDate,MS_D} from './daily.js';
 import {buildChart,yearPillar,liuYue,dayInfo,Solar,zhiRel,ganRel,sanHe,shiShen,ganWx,zhiWx,WX,WXCLS} from './bazi.js';
+import {loadTimeMode,saveTimeMode,bindTimeMode,timeModeLabel} from './timeMode.js';
 const $=s=>document.querySelector(s);
-const CITIES=[['不校正',''],['台北',121.56],['新北',121.46],['桃園',121.30],['新竹',120.97],['台中',120.68],['台南',120.21],['高雄',120.31],['花蓮',121.60],['台東',121.15],['宜蘭',121.75],['香港',114.17],['澳門',113.54],['北京',116.40],['上海',121.47],['廣州',113.26],['成都',104.07],['新加坡',103.82],['吉隆坡',101.69],['東京',139.69],['紐約',-74.0,'tz'],['洛杉磯',-118.24,'tz']];
+const CITIES=[['不校正','','','Asia/Taipei'],['台北',121.56,'','Asia/Taipei'],['新北',121.46,'','Asia/Taipei'],['桃園',121.30,'','Asia/Taipei'],['新竹',120.97,'','Asia/Taipei'],['台中',120.68,'','Asia/Taipei'],['台南',120.21,'','Asia/Taipei'],['高雄',120.31,'','Asia/Taipei'],['花蓮',121.60,'','Asia/Taipei'],['台東',121.15,'','Asia/Taipei'],['宜蘭',121.75,'','Asia/Taipei'],['香港',114.17,'','Asia/Hong_Kong'],['澳門',113.54,'','Asia/Macau'],['北京',116.40,'','Asia/Shanghai'],['上海',121.47,'','Asia/Shanghai'],['廣州',113.26,'','Asia/Shanghai'],['成都',104.07,'','Asia/Shanghai'],['新加坡',103.82,'','Asia/Singapore'],['吉隆坡',101.69,'','Asia/Kuala_Lumpur'],['東京',139.69,'','Asia/Tokyo'],['紐約',-74.0,'tz','America/New_York'],['洛杉磯',-118.24,'tz','America/Los_Angeles']];
 $('#city').innerHTML=CITIES.map(c=>`<option value="${c[1]}">${c[0]}</option>`).join('');
 const c_=w=>`<span class="${WXCLS[w]}">`;const col=ch=>{const w='甲乙丙丁戊己庚辛壬癸'.includes(ch)?ganWx(ch):zhiWx(ch);return `${c_(w)}${ch}</span>`;};
 const gzH=gz=>col(gz[0])+col(gz[1]);
 let chart=null;
+function cityZone(){const i=$('#city').selectedIndex;return (CITIES[i]&&CITIES[i][3])||'Asia/Taipei';}
 function readForm(){const lonIn=$('#lon').value||$('#city').value;
- return {name:$('#name').value||'命主',gender:$('#gender').value,date:$('#date').value,time:$('#time').value||'12:00',lon:lonIn===''?null:Number(lonIn),dst:$('#dst').checked};}
+ return {name:$('#name').value||'命主',gender:$('#gender').value,date:$('#date').value,time:$('#time').value||'12:00',lon:lonIn===''?null:Number(lonIn),dst:$('#dst').checked,timeMode:($('#timeMode')?.value)||'clock',zone:cityZone()};}
 // profiles
 const PK='bazi_profiles';const getP=()=>JSON.parse(localStorage.getItem(PK)||'[]');
 function refreshP(){$('#profiles').innerHTML='<option value="">— 已存檔案 —</option>'+getP().map((p,i)=>`<option value="${i}">${p.name}（${p.date}）</option>`).join('');
  document.querySelectorAll('.pselect').forEach(s=>s.innerHTML='<option value="">— 從存檔帶入 —</option>'+getP().map((p,i)=>`<option value="${i}">${p.name}</option>`).join(''));}
 $('#save').onclick=()=>{const f=readForm();const ps=getP().filter(p=>p.name!==f.name);ps.push(f);localStorage.setItem(PK,JSON.stringify(ps));refreshP();alert('已儲存：'+f.name);};
-$('#profiles').onchange=e=>{const p=getP()[e.target.value];if(!p)return;$('#name').value=p.name;$('#gender').value=p.gender;$('#date').value=p.date;$('#time').value=p.time;$('#lon').value=p.lon??'';$('#city').value='';run();};
+$('#profiles').onchange=e=>{const p=getP()[e.target.value];if(!p)return;$('#name').value=p.name;$('#gender').value=p.gender;$('#date').value=p.date;$('#time').value=p.time;$('#lon').value=p.lon??'';$('#city').value='';if(p.timeMode)$('#timeMode').value=p.timeMode;if(p.dst!=null)$('#dst').checked=!!p.dst;run();};
 $('#del').onclick=()=>{const i=$('#profiles').value;if(i==='')return;const ps=getP();ps.splice(i,1);localStorage.setItem(PK,JSON.stringify(ps));refreshP();};
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs button,.pane').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#'+b.dataset.t).classList.add('on');location.hash=b.dataset.t;document.body.classList.toggle('sheetOn',b.dataset.t==='sheet');if(b.dataset.t==='sheet')import('./sheetPage.js').then(m=>m.initSheet()).catch(e=>{$('#sheet').textContent='詳細命盤載入失敗：'+e.message;});});
 const SSD={比肩:'自主、同儕、競爭',劫財:'魄力、合夥、破耗',食神:'才華、口福、享受',傷官:'創意、表達、叛逆',偏財:'機遇財、人緣、投資',正財:'穩定收入、務實、家庭責任',七殺:'壓力、魄力、挑戰',正官:'名譽、規範、事業地位',偏印:'偏門學問、直覺、獨處',正印:'學業、貴人、長輩庇蔭'};
@@ -30,7 +32,7 @@ function renderChart(c){
  const topSS=Object.entries(ssCount).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]);
  const now=new Date().getFullYear();
  $('#chart').innerHTML=`<h2>${c.name} 的八字命盤（${c.gender?'乾造':'坤造'}）</h2>
- <p class="muted">排盤時間：${c.solar.toYmdHms().slice(0,16)}${c.off?`（已依真太陽時校正 ${c.off.toFixed(1)} 分鐘）`:''}｜農曆 ${c.lunarText}｜生肖 ${c.shengXiao}</p>
+ <p class="muted">排盤口徑：${timeModeLabel(c.timeMode,{stripped:c.dstStripped,dstMin:c.dstMin,inputTime:c.inputTime,standardTime:c.standardTime})}｜排盤時間：${c.solar.toYmdHms().slice(0,16)}${c.off?`（已依真太陽時校正 ${c.off.toFixed(1)} 分鐘）`:''}｜農曆 ${c.lunarText}｜生肖 ${c.shengXiao}</p>
  <div class="scroll"><table><tr><th></th>${P.map(p=>`<th>${p.label}</th>`).join('')}</tr>
  <tr><th>十神</th>${P.map(p=>`<td>${p.ss}</td>`).join('')}</tr>
  <tr><th>天干</th>${P.map(p=>`<td class="big">${col(p.gan)}</td>`).join('')}</tr>
@@ -71,7 +73,7 @@ function renderMatchPane(){$('#match').innerHTML=`<h2>合婚／合盤</h2><p cla
  <label>存檔<select class="pselect" id="mP"></select></label><label>姓名<input id="mName" value="對方"></label><label>性別<select id="mG"><option value="0">女</option><option value="1">男</option></select></label>
  <label>出生日期<input type="date" id="mD" value="1992-06-15"></label><label>出生時間<input type="time" id="mT" value="08:00"></label></div><div class="row"><button class="pri" id="mGo">合盤</button></div><div id="mOut"></div>`;
  $('#mP').onchange=e=>{const p=getP()[e.target.value];if(!p)return;$('#mName').value=p.name;$('#mG').value=p.gender;$('#mD').value=p.date;$('#mT').value=p.time;};$('#mGo').onclick=renderMatch;refreshP();}
-function renderMatch(){if(!chart)return;const a=chart,b=buildChart({name:$('#mName').value,gender:$('#mG').value,date:$('#mD').value,time:$('#mT').value||'12:00'});
+function renderMatch(){if(!chart)return;const a=chart,b=buildChart({name:$('#mName').value,gender:$('#mG').value,date:$('#mD').value,time:$('#mT').value||'12:00',timeMode:chart.timeMode,zone:chart.zone});
  let s=60;const notes=[];const P=(c,i)=>c.pillars[i];
  const chk=(i,lab,wt)=>{const zr=zhiRel(P(a,i).zhi,P(b,i).zhi),gr=ganRel(P(a,i).gan,P(b,i).gan);
   zr.forEach(r=>{if(r.startsWith('六合')){s+=wt;notes.push(['good',`${lab}地支 ${P(a,i).zhi}${P(b,i).zhi}六合，彼此契合 +${wt}`]);}else if(r==='沖'){s-=wt;notes.push(['bad',`${lab}地支 ${P(a,i).zhi}${P(b,i).zhi}相沖，觀念易衝突 −${wt}`]);}else{s-=wt/2;notes.push(['bad',`${lab}地支${r}，需多包容 −${wt/2}`]);}});
@@ -105,8 +107,8 @@ function renderPick(){if(!chart)return;const c=chart,[lab,keys]=PURP[$('#pP').va
  $('#pOut').innerHTML=`<p>${lab}（${$('#pS').value} 至 ${$('#pE').value}）：共 ${rows.length} 個合適日子（已排除宜忌不符、${$('#pHd').checked?'黑道日、':''}沖命主日支 ${c.pillars[2].zhi} 或年支 ${c.pillars[0].zhi} 之日）。★ 為與命主相合或天干屬喜用。</p>
  <div class="scroll"><table><tr><th>日期</th><th>農曆</th><th>日柱</th><th>建除／值神</th><th>沖煞</th><th>宜</th><th>忌</th></tr>${rows.map(r=>`<tr class="${r.he?'good':''}"><td>${r.he?'★ ':''}${r.sol.toYmd()}<br><small>週${'日一二三四五六'[r.sol.getWeek()]}</small></td><td>${r.i.lunar}</td><td>${gzH(r.i.gz)}</td><td>${r.i.zhixing}／${r.i.tianshen}</td><td>沖${r.i.chong}<br>煞${r.i.sha}</td><td style="text-align:left"><small>${r.i.yi.join(' ')}</small></td><td style="text-align:left"><small>${r.i.ji.join(' ')}</small></td></tr>`).join('')}</table></div>`;}
 function run(){try{chart=buildChart(readForm());}catch(e){alert('資料有誤：'+e.message);return;}
- $('#tstNote').textContent=chart.off?`真太陽時校正：${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'';renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);initMingshu();renderDaily(chart,$,gzH,dl,readForm);if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();addBars();}
-{const q=new URLSearchParams(location.search);if(q.get('d'))$('#date').value=q.get('d');if(q.get('t'))$('#time').value=q.get('t');if(q.get('g'))$('#gender').value=q.get('g');if(q.get('n'))$('#name').value=q.get('n');if(q.get('lon'))$('#lon').value=q.get('lon');if(q.get('dst'))$('#dst').checked=true;}
+ $('#tstNote').textContent=timeModeLabel(chart.timeMode,{stripped:chart.dstStripped,dstMin:chart.dstMin,inputTime:chart.inputTime,standardTime:chart.standardTime})+(chart.off?`；真太陽時校正 ${chart.off>0?'+':''}${chart.off.toFixed(1)} 分鐘`:'');renderChart(chart);renderYear();$('#rBody').innerHTML=buildReport(chart);initMingshu();renderDaily(chart,$,gzH,dl,readForm);if($('#mOut').innerHTML)renderMatch();if($('#pOut').innerHTML)renderPick();addBars();}
+{const q=new URLSearchParams(location.search);if(q.get('d'))$('#date').value=q.get('d');if(q.get('t'))$('#time').value=q.get('t');if(q.get('g'))$('#gender').value=q.get('g');if(q.get('n'))$('#name').value=q.get('n');if(q.get('lon'))$('#lon').value=q.get('lon');if(q.get('dst'))$('#dst').checked=true;$('#timeMode').value=loadTimeMode();$('#timeMode').onchange=()=>{saveTimeMode($('#timeMode').value);if($('#date').value)run();};}
 renderYearPane();renderMatchPane();renderPickPane();refreshP();$('#calc').onclick=run;
 
 
@@ -119,7 +121,7 @@ $('#rHtml').onclick=()=>dl(`${chart.name}_八字論命報告.html`,'text/html',d
 
 // ---- unified export toolbar (Word / PDF / 分享) ----
 const TABS={chart:['命盤','#chart'],report:['完整論命','#rBody'],daily:['逐日對照','#daily'],year:['流年運勢','#lyOut'],match:['合婚合盤','#mOut'],pick:['擇日','#pOut']};
-function stateUrl(tab){const f=readForm();const q=new URLSearchParams({n:f.name,d:f.date,t:f.time,g:f.gender});if(f.lon!=null)q.set('lon',f.lon);if(f.dst)q.set('dst','1');
+function stateUrl(tab){const f=readForm();const q=new URLSearchParams({n:f.name,d:f.date,t:f.time,g:f.gender,tm:f.timeMode||'clock'});if(f.lon!=null)q.set('lon',f.lon);if(f.dst)q.set('dst','1');
  if(tab==='year')q.set('y',$('#ly').value);
  if(tab==='match'){q.set('mn',$('#mName').value);q.set('mg',$('#mG').value);q.set('md',$('#mD').value);q.set('mt',$('#mT').value);}
  if(tab==='pick'){q.set('pp',$('#pP').value);q.set('ps',$('#pS').value);q.set('pe',$('#pE').value);q.set('ph',$('#pHd').checked?'1':'0');}

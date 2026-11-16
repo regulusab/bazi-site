@@ -10,7 +10,7 @@ export function lifeDur(ms){const days=ms/MS_D;const y=Math.floor(days/360),mo=M
 export function overviewRows(c){return c.yun.segs.map((s,i)=>({i,s,label:i?`第${i}運`:'上運前',gz:s.gz,ss:i?shiShen(c.dm,s.gz[0]):'月柱',
  jie:`${i?s.jieName:'出生'} ${fmtS(s.celFrom)} → ${s.jieName2||c.yun.J[0].name} ${fmtS(s.celTo)}`,cel:dur(s.celTo-s.celFrom),life:lifeDur(s.to-s.from),from:fmt(s.from),to:fmt(s.to),tone:i?dyEval(c,c.dayun[i-1]).tone:'—'}));}
 export function termTable(c){const segs=c.yun.segs;const a=Math.min(c.birthMs,segs[segs.length-1].celTo)-32*MS_D,b=Math.max(c.birthMs,segs[segs.length-1].celTo)+2*MS_D;return termsBetween(a,b);}
-export function shareUrl(f){const q=new URLSearchParams({n:f.name,d:f.date,t:f.time,g:f.gender});if(f.lon!=null)q.set('lon',f.lon);if(f.dst)q.set('dst','1');return location.origin+location.pathname+'?'+q+'#daily';}
+export function shareUrl(f){const q=new URLSearchParams({n:f.name,d:f.date,t:f.time,g:f.gender});if(f.lon!=null)q.set('lon',f.lon);if(f.dst)q.set('dst','1');if(f.timeMode)q.set('tm',f.timeMode);return location.origin+location.pathname+'?'+q+'#daily';}
 export function renderDaily(c,$,gzH,dl,form){
  const rows=dailyRows(c),segs=c.yun.segs,t=new Date(),nowMs=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate(),t.getHours(),t.getMinutes());
  const ov=overviewRows(c);const last=segs[segs.length-1];
@@ -22,7 +22,7 @@ export function renderDaily(c,$,gzH,dl,form){
   return `<tr id="dr${idx}" class="${cur?'cur':''}"><td>${r.no}${r.partial?' ⚠':''}</td><td>${fmt(r.cel,false)}<br><small>${fmt(r.celA).slice(11)}–${r.celB%MS_D===0?'24:00':fmt(r.celB).slice(11)}</small></td><td class="big">${gzH(r.gz)}</td><td>${ml}</td><td>${fmt(r.from)}</td><td>${fmt(r.to)}</td><td>${prog}%</td><td>${ROLE[c.A.role(ganWx(r.gz[0]))]}／${ROLE[c.A.role(zhiWx(r.gz[1]))]}</td><td>${x.ly}</td><td><span class="lv-${x.lv}">${x.lv}${x.chong?'▲':''}</span></td></tr>`;};
  const head='<tr><th>序號</th><th>天體日期</th><th>日干支</th><th>月令</th><th>大運對應起點</th><th>大運對應迄點</th><th>歷程推進</th><th>干／支喜忌</th><th>流年</th><th>綜合</th></tr>';
  $('#daily').innerHTML=`<h2>大運逐日對照</h2>
- <p>節氣：${c.useDE?SOURCE+'，太陽地心視黃經每 15° 交節，精確至秒（±1 秒）':'超出 DE421 表範圍，改用 lunar-javascript 演算法'}。出生 ${fmt(c.birthMs)}${c.dst?'（已扣夏令時 1 小時）':''}，${c.gender?'男':'女'}命，年干${'陽陰'[('甲乙丙丁戊己庚辛壬癸'.indexOf(c.pillars[0].gan))%2]}，大運<b>${c.forward?'順':'逆'}排</b>。起運 <b>${c.startSolar}</b>（${c.yun.trad.text}）。</p>
+ <p>節氣：${c.useDE?SOURCE+'，太陽地心視黃經每 15° 交節，精確至秒（±1 秒）':'超出 DE421 表範圍，改用 lunar-javascript 演算法'}。排盤口徑：${c.timeMode==='solar'?'真太陽時':'鐘錶時間（依時鐘所示）'}。出生 ${fmt(c.birthMs)}${c.dst?'（已扣夏令時 1 小時）':''}，${c.gender?'男':'女'}命，年干${'陽陰'[('甲乙丙丁戊己庚辛壬癸'.indexOf(c.pillars[0].gan))%2]}，大運<b>${c.forward?'順':'逆'}排</b>。起運 <b>${c.startSolar}</b>（${c.yun.trad.text}）。</p>
  <div class="row noprint"><button id="dShare">複製分享連結</button><button id="dCsv">下載 CSV</button><label>人生日期→天體日<input type="date" id="dLife"></label><label>天體日→人生區間<input type="date" id="dCel"></label></div><p id="dHit"></p>
  <h3>折算口訣</h3><p>天體 3 日 = 人生 1 年；1 日 = 4 個月；1 時辰 = 10 日；1 小時 = 5 日；1 分 = 2 小時；1 秒 = 2 分（即天體時間 × ${RATIO}）。</p>
  <h3>大運總覽（上運前＋十運）</h3><div class="scroll"><table><tr><th>序號</th><th>大運干支</th><th>十神</th><th>對應節氣區間</th><th>天體時長</th><th>折算人生時長</th><th>人生起點</th><th>人生終點</th><th>底色</th></tr>${ov.map(o=>`<tr class="${nowMs>=o.s.from&&nowMs<o.s.to?'cur':''}"><td>${o.label}</td><td class="big">${gzH(o.gz)}</td><td>${o.ss}</td><td><small>${o.jie}</small></td><td><small>${o.cel}</small></td><td><small>${o.life}</small></td><td>${o.from}</td><td>${o.to}</td><td>${o.tone}</td></tr>`).join('')}</table></div>

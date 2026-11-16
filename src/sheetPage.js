@@ -3,12 +3,13 @@ import tzlookup from 'tz-lookup';
 import {sheetData} from './sheetData.js';
 import {layoutSheet} from './sheetLayout.js';
 import {sheetSvg,loadFonts,sheetPdf,sheetDocx} from './sheetRender.js';
+import {loadTimeMode,saveTimeMode,timeModeLabel} from './timeMode.js';
 const $=s=>document.querySelector(s);
 const CITIES=[['台灣（台北）',25.0330,121.5654,'Asia/Taipei'],['台中',24.1477,120.6736,'Asia/Taipei'],['高雄',22.6273,120.3014,'Asia/Taipei'],['香港',22.3193,114.1694,'Asia/Hong_Kong'],['澳門',22.1987,113.5439,'Asia/Macau'],['上海',31.2304,121.4737,'Asia/Shanghai'],['北京',39.9042,116.4074,'Asia/Shanghai'],['新加坡',1.3521,103.8198,'Asia/Singapore'],['吉隆坡',3.1390,101.6869,'Asia/Kuala_Lumpur'],['東京',35.6812,139.7671,'Asia/Tokyo'],
  ['波特蘭（奧勒岡）',45.52,-122.68,'America/Los_Angeles'],['洛杉磯',34.0522,-118.2437,'America/Los_Angeles'],['舊金山',37.7749,-122.4194,'America/Los_Angeles'],['西雅圖',47.6062,-122.3321,'America/Los_Angeles'],['溫哥華',49.2827,-123.1207,'America/Vancouver'],['紐約',40.7128,-74.0060,'America/New_York'],['多倫多',43.6532,-79.3832,'America/Toronto'],['倫敦',51.5074,-0.1278,'Europe/London'],['雪梨',-33.8688,151.2093,'Australia/Sydney'],['— 自訂經緯度 —']];
 const pad=n=>String(n).padStart(2,'0');
 const todayStr=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
-const F={sName:'n',sGender:'g',sDate:'d',sTime:'t',sLat:'lat',sLon:'lon',sZone:'tz',sDayRule:'dr',sList:'ld'};
+const F={sName:'n',sGender:'g',sDate:'d',sTime:'t',sTimeMode:'tm',sLat:'lat',sLon:'lon',sZone:'tz',sDayRule:'dr',sList:'ld'};
 export function initSheet(){const pane=$('#sheet');if(pane.dataset.init)return;pane.dataset.init='1';
  pane.innerHTML=`<section class="card noprint"><h2>詳細命盤（八字論斷）</h2>
  <div class="grid">
@@ -16,11 +17,12 @@ export function initSheet(){const pane=$('#sheet');if(pane.dataset.init)return;p
  <label>性別<select id="sGender"><option value="1">男（乾造）</option><option value="0">女（坤造）</option></select></label>
  <label>出生日期（國曆）<input type="date" id="sDate" value="1990-01-01"></label>
  <label>出生時間（時：分）<input type="time" id="sTime" value="12:00"></label>
+ <label>排盤時間口徑<select id="sTimeMode"><option value="clock" selected>鐘錶時間（預設）</option><option value="solar">真太陽時</option></select></label>
  <label>出生地<select id="sCity">${CITIES.map((c,i)=>`<option value="${i}">${c[0]}</option>`).join('')}</select></label>
  <label>時區（IANA）<input id="sZone" value="Asia/Taipei"></label>
  <label>緯度<input id="sLat" type="number" step="0.0001" value="25.0330"></label>
  <label>經度<input id="sLon" type="number" step="0.0001" value="121.5654"></label>
- <label class="chk"><span><input type="checkbox" id="sStd" checked> 以當地標準時間排盤（自動扣除夏令時間）</span><small class="muted">台灣 1945–1961、1974–1975、1979 年夏令時間依時區資料自動判斷</small></label>
+ <label class="chk"><span><input type="checkbox" id="sStd"> 改以當地標準時間排盤（扣除夏令時間）</span><small class="muted">預設依時鐘所示、不去掉夏令。台灣曾實施：1945–1961、1974–1975、1979 年夏季</small></label>
  <label>日柱換日<select id="sDayRule"><option value="line">干支換日線（東經70°以西加一日，與星僑相同）</option><option value="civil">依出生地當地日期</option></select></label>
  <label>列表日期<input type="date" id="sList"></label>
  </div>
@@ -32,15 +34,15 @@ export function initSheet(){const pane=$('#sheet');if(pane.dataset.init)return;p
  const autoZone=()=>{try{$('#sZone').value=tzlookup(+$('#sLat').value,+$('#sLon').value);}catch(e){}};
  $('#sCity').onchange=()=>{const c=CITIES[$('#sCity').value];if(c[1]==null)return;$('#sLat').value=c[1];$('#sLon').value=c[2];$('#sZone').value=c[3];};
  $('#sLat').onchange=$('#sLon').onchange=()=>{$('#sCity').value=String(CITIES.length-1);autoZone();};
- $('#sFrom').onclick=()=>{$('#sName').value=$('#name')?.value||'命主';$('#sGender').value=$('#gender')?.value||'1';$('#sDate').value=$('#date')?.value||'';$('#sTime').value=$('#time')?.value||'12:00';$('#sStd').checked=true;gen();};
+ $('#sFrom').onclick=()=>{$('#sName').value=$('#name')?.value||'命主';$('#sGender').value=$('#gender')?.value||'1';$('#sDate').value=$('#date')?.value||'';$('#sTime').value=$('#time')?.value||'12:00';if($('#timeMode'))$('#sTimeMode').value=$('#timeMode').value;$('#sStd').checked=false;gen();};
  const q=new URLSearchParams(location.search);if(location.hash==='#sheet'&&q.get('d')){for(const [id,k] of Object.entries(F)){const v=q.get(k);if(v!=null&&$('#'+id))$('#'+id).value=v;}
-  if(q.get('std')==='0')$('#sStd').checked=false;if(q.get('lat')){const i=CITIES.findIndex(c=>c[1]==+q.get('lat')&&c[2]==+q.get('lon'));$('#sCity').value=String(i>=0?i:CITIES.length-1);}}
- $('#sGen').onclick=gen;$('#sPdf').onclick=()=>dl('pdf');$('#sDocx').onclick=()=>dl('docx');
+  if(q.get('std')==='1')$('#sStd').checked=true;if(!q.get('tm'))$('#sTimeMode').value=loadTimeMode();if(q.get('lat')){const i=CITIES.findIndex(c=>c[1]==+q.get('lat')&&c[2]==+q.get('lon'));$('#sCity').value=String(i>=0?i:CITIES.length-1);}}
+ $('#sTimeMode').onchange=()=>{saveTimeMode($('#sTimeMode').value);};$('#sGen').onclick=gen;$('#sPdf').onclick=()=>dl('pdf');$('#sDocx').onclick=()=>dl('docx');
  $('#sShare').onclick=async()=>{const url=shareUrl();try{if(navigator.share){await navigator.share({title:'八字論斷 '+$('#sName').value,url});return;}}catch(e){if(e.name==='AbortError')return;}
   try{await navigator.clipboard.writeText(url);$('#sMsg').textContent='已複製分享連結';}catch(e){prompt('分享連結（請複製）',url);}};
  gen();}
-function input(){return {name:$('#sName').value.trim()||'命主',gender:+$('#sGender').value,date:$('#sDate').value,time:$('#sTime').value||'12:00',zone:$('#sZone').value.trim()||'Asia/Taipei',lon:+$('#sLon').value,useStd:$('#sStd').checked,dayRule:$('#sDayRule').value,listDate:$('#sList').value||todayStr()};}
-function shareUrl(){const q=new URLSearchParams();for(const [id,k] of Object.entries(F))q.set(k,$('#'+id).value);if(!$('#sStd').checked)q.set('std','0');return location.origin+location.pathname+'?'+q+'#sheet';}
+function input(){return {name:$('#sName').value.trim()||'命主',gender:+$('#sGender').value,date:$('#sDate').value,time:$('#sTime').value||'12:00',zone:$('#sZone').value.trim()||'Asia/Taipei',lon:+$('#sLon').value,useStd:$('#sStd').checked,timeMode:$('#sTimeMode').value,dayRule:$('#sDayRule').value,listDate:$('#sList').value||todayStr()};}
+function shareUrl(){const q=new URLSearchParams();for(const [id,k] of Object.entries(F))q.set(k,$('#'+id).value);if($('#sStd').checked)q.set('std','1');return location.origin+location.pathname+'?'+q+'#sheet';}
 let cur=null;
 export async function gen(){const msg=$('#sMsg'),note=$('#sNote');const inp=input();
  if(!/^\d{4}-\d{2}-\d{2}$/.test(inp.date)){msg.textContent='請輸入出生日期';return;}
@@ -48,7 +50,7 @@ export async function gen(){const msg=$('#sMsg'),note=$('#sNote');const inp=inpu
  let r;try{r=sheetData(inp);}catch(e){msg.textContent='排盤失敗：'+e.message;return;}
  const glyphs=layoutSheet(r.W);cur={inp,W:r.W,info:r.info,glyphs};
  const i=r.info,notes=[];
- if(i.dst&&inp.useStd)notes.push(`出生時為夏令時間，已扣除 ${i.dst} 分鐘`);if(i.shift)notes.push('出生地在東經70°以西，依干支換日線日柱加一日');
+ notes.push(timeModeLabel(inp.timeMode,{stripped:i.dst&&inp.useStd,dstMin:i.dst}));if(i.dst&&inp.useStd)notes.push(`出生時為夏令時間，已扣除 ${i.dst} 分鐘`);if(i.shift)notes.push('出生地在東經70°以西，依干支換日線日柱加一日');
  if(i.gap)notes.push('此時刻在夏令時間切換的跳空區間內，請確認');if(i.amb)notes.push('此時刻在夏令時間切換的重複區間內（採第一次）');
  note.textContent=`八字：${[...r.W.bazi].reverse().join(' ')}（年月日時）${notes.length?'｜'+notes.join('；'):''}`;
  msg.textContent='載入字型中…';

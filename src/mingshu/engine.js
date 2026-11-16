@@ -115,7 +115,7 @@ export function model(form,opt={}){
  const ge=geSS==='比肩'?'建祿格':geSS==='劫財'?'月刃格':geSS+'格';
  // 命宮、胎元、胎息、空亡、命卦
  const mg=minggong(P[0].gan,P[1].zhi,P[3].zhi);
- const sd=sheetData({name:form.name,gender:form.gender,date:form.date,time:form.time,zone:'Asia/Taipei',lon:lon??121.5654,useStd:!form.dst?true:true});
+ const sd=sheetData({name:form.name,gender:form.gender,date:form.date,time:form.time,zone:form.zone||'Asia/Taipei',lon:lon??121.5654,useStd:!!form.useStd,timeMode:form.timeMode==='solar'?'solar':'clock'});
  const gyear=sd.info.guaYear;const gua=mingGua(gyear,male);
  const dyAsc=[...sd.W.dy_gz].reverse(),dyAge=[...sd.W.dy_age].reverse().map(Number);
  const dayun=dyAsc.map((gz,i)=>({gz,from:dyAge[i],to:dyAge[i]+9,ss:shiShen(dm,gz[0]),zs:shiShen(dm,mainQi(gz[1]))}));
