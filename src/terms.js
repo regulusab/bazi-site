@@ -17,3 +17,16 @@ export function yearMonthPillar(ms){const i=bs(ms);const j=JIE[i];const mIdx=((j
  const yg=(Y-4)%10,yz=(Y-4)%12;const yGz=GAN[(yg+10)%10]+ZHI[(yz+12)%12];
  const mg=((yg%5)*2+2+mIdx)%10;const mz=(2+mIdx)%12;return {year:yGz,month:GAN[mg]+ZHI[mz],jie:j};}
 export function termsBetween(a,b){return TERMS.filter(t=>t.ms>=a&&t.ms<=b);}
+
+/** 節氣表存為台北標準時間 UTC+8 牆鐘毫秒；與世界時差 8 小時。 */
+export const TERM_OFFSET_MIN = 8 * 60;
+/** 出生地地方平時相對 UT 的分鐘數：經度 × 4（東經正、西經負），不加夏令。老師 2026-11-19 裁定。 */
+export const lmtOffsetMin = lon => lon * 4;
+/** 節氣表時刻 → 出生地地方平時牆鐘毫秒（UT + 經度×4 分，不加夏令）。 */
+export function jieMsToLmt(jieMs, lon) {
+  return jieMs - TERM_OFFSET_MIN * 6e4 + lmtOffsetMin(lon) * 6e4;
+}
+/** 出生地地方平時牆鐘毫秒 → 節氣表（台北 UTC+8）尺度，供 yearMonthPillar／prevJieIdx／inRange 沿用。出生時間照輸入（地方平時，不換算）。 */
+export function lmtToTermScale(lmtMs, lon) {
+  return lmtMs - lmtOffsetMin(lon) * 6e4 + TERM_OFFSET_MIN * 6e4;
+}

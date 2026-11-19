@@ -1,5 +1,5 @@
 import {preciseYun} from './daily.js';
-import {inRange,yearMonthPillar,jieAround} from './terms.js';
+import {inRange,yearMonthPillar,jieAround,lmtToTermScale} from './terms.js';
 import {analyze} from './analysis.js';
 import {CLOCK_STRIP_DST,resolveStandard} from './timeMode.js';
 import LJ from 'lunar-javascript';
@@ -36,6 +36,7 @@ export function buildChart({name,gender,date,time,lon,dst,timeMode,zone,stripDst
  // timeMode 預設 'solar'：維持舊行為，供共用事實檔等呼叫端相容。網站介面改傳 'clock'。
  const mode=timeMode==='clock'?'clock':'solar';
  let [Y,M,D]=date.split('-').map(Number),[h,m]=(time||'12:00').split(':').map(Number);
+ const enteredWall=Date.UTC(Y,M-1,D,h,m);
  const inputTime=`${date} ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
  let dstMin=0,stripped=false,usedZone=zone||null,stdTime=inputTime;
  if(dst){const x=new Date(Date.UTC(Y,M-1,D,h,m)-36e5);Y=x.getUTCFullYear();M=x.getUTCMonth()+1;D=x.getUTCDate();h=x.getUTCHours();m=x.getUTCMinutes();dstMin=60;stdTime=`${Y}-${String(M).padStart(2,'0')}-${String(D).padStart(2,'0')} ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
@@ -49,13 +50,14 @@ export function buildChart({name,gender,date,time,lon,dst,timeMode,zone,stripDst
  const r0=mode==='solar'?trueSolar(base,lon):{d:base,off:0};const d=r0.d,off=r0.off;
  const solar=Solar.fromYmdHms(d.getFullYear(),d.getMonth()+1,d.getDate(),d.getHours(),d.getMinutes(),0);
  const lunar=solar.getLunar(),ec=lunar.getEightChar();
- // 年月柱依節氣瞬間（DE421，台北標準時間牆鐘 = UT+8）。鐘錶模式不受真太陽時平移；若有時區則以實際世界時換算。
+ // 年月柱依節氣瞬間（DE421）。有經度時：交節氣與出生時刻皆用出生地地方平時（UT+經度×4分，不加夏令；出生時間照輸入）。無經度時仍用台北 UTC+8 尺度。不受 timeMode 影響。
  let birthMs;
  if(mode==='clock'){
   if(usedZone){const rs=resolveStandard(usedZone,Y,M,D,h,m,{stripDst:false});birthMs=rs.ut+8*36e5;}
   else birthMs=Date.UTC(Y,M-1,D,h,m);
  }else birthMs=Date.UTC(solar.getYear(),solar.getMonth()-1,solar.getDay(),solar.getHour(),solar.getMinute(),0);
- const useDE=inRange(birthMs);const ym=useDE?yearMonthPillar(birthMs):null;
+ const termMs=(lon!=null&&lon!=='')?lmtToTermScale(enteredWall,+lon):birthMs;
+ const useDE=inRange(termMs);const ym=useDE?yearMonthPillar(termMs):null;
  const gz=[useDE?ym.year:ec.getYear(),useDE?ym.month:ec.getMonth(),ec.getDay(),ec.getTime()];const dm=gz[2][0];
  const ny=gz.map(g=>tw(LJ.LunarUtil.NAYIN[g]));
  const pillars=gz.map((p,i)=>({label:['年柱','月柱','日柱','時柱'][i],gan:p[0],zhi:p[1],ss:i===2?'日主':shiShen(dm,p[0]),
@@ -72,9 +74,9 @@ export function buildChart({name,gender,date,time,lon,dst,timeMode,zone,stripDst
  const yangYear=GAN.indexOf(gz[0][0])%2===0;const forward=(Number(gender)===1)===yangYear;
  const mi=GAN.indexOf(gz[1][0]),mz=ZHI.indexOf(gz[1][1]);
  const dyGz=Array.from({length:10},(_,i)=>{const k=forward?i+1:-(i+1);return GAN[((mi+k)%10+10)%10]+ZHI[((mz+k)%12+12)%12];});
- const yunR=preciseYun(birthMs,forward,dyGz,gz[1],dm,useDE);const by=solar.getYear();const iso=ms=>new Date(ms).toISOString().slice(0,16).replace('T',' ');
+ const yunR=preciseYun(termMs,forward,dyGz,gz[1],dm,useDE);const by=solar.getYear();const iso=ms=>new Date(ms).toISOString().slice(0,16).replace('T',' ');
  const dayun=yunR.segs.slice(1).map((sg,i)=>{const a=new Date(sg.from),b=new Date(sg.to);return {gz:dyGz[i],ss:shiShen(dm,dyGz[i][0]),start:iso(sg.from),end_:iso(sg.to),fromMs:sg.from,toMs:sg.to,year:a.getUTCFullYear(),endYear:b.getUTCFullYear(),age:a.getUTCFullYear()-by+1,end:b.getUTCFullYear()-by+1};});
- const J0=yunR.J[0];const around=useDE?jieAround(birthMs):null;
+ const J0=yunR.J[0];const around=useDE?jieAround(termMs):null;
  const res={name,gender:Number(gender),solar,lunar,pillars,dm,dw,score,self,lev,strong,xi,ji,off,dst:!!dst||stripped,dstMin,dstStripped:stripped,timeMode:mode,zone:usedZone,inputTime,standardTime:stdTime,useDE,birthMs,forward,yun:yunR,dayun,
   startSolar:iso(yunR.startMs),start:`${yunR.trad.y}年${yunR.trad.m}個月${yunR.trad.d}天`,
   prevJie:useDE?[around.prev.name,iso(around.prev.ms)+':'+new Date(around.prev.ms).toISOString().slice(17,19)]:[tw(lunar.getPrevJie(false).getName()),lunar.getPrevJie(false).getSolar().toYmdHms()],

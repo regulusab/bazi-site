@@ -92,8 +92,9 @@ export function model(form,opt={}){
  const c=buildChart(form);
  const lon=form.lon==null||form.lon===''?null:+form.lon;
  const P=c.pillars.map(p=>({gan:p.gan,zhi:p.zhi,nayin:p.nayin}));
- if(lon!=null&&lon<70){ // 干支換日線：東經 70° 以西日序 +1，時干隨日干
-  const d=gzAdd(P[2].gan+P[2].zhi,1);P[2]={...P[2],gan:d[0],zhi:d[1]};const zi=Z.indexOf(P[3].zhi);P[3]={...P[3],gan:G[((G.indexOf(d[0])%5)*2+zi)%10]};}
+ if(lon!=null&&lon<70){ // 干支換日線：東經 70° 以西日序 +1，時干隨新日干；晚子時（23:00 後）依再下一日
+  const d=gzAdd(P[2].gan+P[2].zhi,1);P[2]={...P[2],gan:d[0],zhi:d[1]};const zi=Z.indexOf(P[3].zhi);
+  const hh=+(form.time||'12:00').split(':')[0];const hs=hh>=23?gzAdd(d,1)[0]:d[0];P[3]={...P[3],gan:G[((G.indexOf(hs)%5)*2+zi)%10]};}
  const dm=P[2].gan,dw=ganWx(dm),male=Number(form.gender)===1;
  P.forEach((p,i)=>{p.ss=i===2?'日元':shiShen(dm,p.gan);p.cang=CANG[p.zhi];p.fu=[...p.cang].map(h=>shiShen(dm,h));p.main=shiShen(dm,mainQi(p.zhi));p.stage=stage12(dm,p.zhi);});
  // 五行旺度

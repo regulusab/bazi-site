@@ -1,7 +1,7 @@
 // 詳細命盤（星僑八字論斷格式）資料推算。純邏輯：瀏覽器與 Node 皆可用。
 // 規則由兩張星僑範本反推，並以 王先生（1962-08-08 00:10）Python 版逐欄驗證。
 import LJ from 'lunar-javascript';
-import {JIE,TERMS,inRange,yearMonthPillar,prevJieIdx} from './terms.js';
+import {JIE,TERMS,inRange,yearMonthPillar,prevJieIdx,lmtToTermScale,jieMsToLmt} from './terms.js';
 import {wallToUt,zoneOffsetMin,dayIdx,gz as gz60,LINE,eotMin,CLOCK_STRIP_DST,standardOffsetMin} from './global.js';
 const {Solar}=LJ;
 export const G='甲乙丙丁戊己庚辛壬癸', Z='子丑寅卯辰巳午未申酉戌亥';
@@ -88,9 +88,9 @@ export function sheetData(inp){
  const useStd=mode==='clock'?(inp.useStd!=null?!!inp.useStd:CLOCK_STRIP_DST):false;
  const dst=off-stdOff;const lOff=useStd?stdOff:off;
  const local=ut+lOff*6e4; // 排盤用當地鐘點（鐘錶模式預設已扣夏令時間）
- const tpe=ut+8*H;if(!inRange(tpe))throw new Error('出生時刻超出 DE421 節氣表範圍（1900–2050）');
- const ym=yearMonthPillar(tpe);
  const lon=inp.lon==null||inp.lon===''?121.5654:+inp.lon;const east=lon>=LINE,L=east?lon:lon+360;
+ const birthLmtMs=wall;const termMs=lmtToTermScale(birthLmtMs,lon);if(!inRange(termMs))throw new Error('出生時刻超出 DE421 節氣表範圍（1900–2050）');
+ const ym=yearMonthPillar(termMs);
  const shift=(inp.dayRule||'line')==='line'&&lon<LINE?1:0;
  // 真太陽時：與全球八字相同，依干支換日線有效經度 L 加均時差；鐘錶時間：當地標準時，70° 以西日序 +1
  const used=mode==='solar'?(ut+L/15*H+eotMin(ut)*6e4):local;
@@ -109,19 +109,19 @@ export function sheetData(inp){
  const fdy=dy.map(g=>fu(dm,g[1]));
  const gzr=gongzhi(mg);
  // 節
- const i=prevJieIdx(tpe),prev=JIE[i],next=JIE[i+1];
- const jLocal=j=>j.ms-8*H+lOff*6e4; // 節氣時刻換成當地（排盤）鐘點
+ const i=prevJieIdx(termMs),prev=JIE[i],next=JIE[i+1];
+ const jLocal=j=>jieMsToLmt(j.ms,lon); // 節氣時刻換成出生地地方平時（UT+經度×4分，不加夏令）
  // 人元用事
- const daysIn=(tpe-prev.ms)/DAY;const ry=siling(p[2][1],daysIn);
+ const daysIn=(termMs-prev.ms)/DAY;const ry=siling(p[2][1],daysIn);
  // 旺相休囚死：四季月最後 18 天（以日期計）為土旺
- let E=elOfZ[p[2][1]];if('辰未戌丑'.includes(p[2][1])&&dayNo(jLocal(next))-dayNo(local)<=18)E='土';
+ let E=elOfZ[p[2][1]];if('辰未戌丑'.includes(p[2][1])&&dayNo(jLocal(next))-dayNo(birthLmtMs)<=18)E='土';
  const wx=wangxiang(E);
- // 起運：三日折一年（1 分鐘 = 2 小時），四捨五入至日
- const target=forward?next:prev;const diff=Math.abs(target.ms-tpe);const vd=Math.round(diff/DAY*120);
+ // 起運：三日折一年（1 分鐘 = 2 小時），四捨五入至日；節距以地方平時計
+ const target=forward?next:prev;const diff=Math.abs(target.ms-termMs);const vd=Math.round(diff/DAY*120);
  const QY=Math.floor(vd/360),QM=Math.floor((vd%360)/30),QD=vd%30;
  const jy0=Date.UTC(LY+QY,LM-1+QM,LD+QD);const [JY]=ymd(jy0);
  // 「每逢」句：交運日當天或之前最近的一個節氣（含中氣，範本有「穀雨後2天」）
- const endT=jy0+DAY-lOff*6e4+8*H;let k=TERMS.length-1;while(k>0&&TERMS[k].ms>=endT)k--;const jj=TERMS[k];const N=dayNo(jy0)-dayNo(jLocal(jj));
+ const endT=lmtToTermScale(jy0+DAY,lon);let k=TERMS.length-1;while(k>0&&TERMS[k].ms>=endT)k--;const jj=TERMS[k];const N=dayNo(jy0)-dayNo(jLocal(jj));
  const s1=G[((JY-4)%10+10)%10],s2=G[(G.indexOf(s1)+5)%10];
  const a0=JY-LY+1;const dyAge=Array.from({length:8},(_,i)=>String(a0+10*i)).reverse();
  // 年份、陰曆

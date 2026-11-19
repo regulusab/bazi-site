@@ -39,16 +39,16 @@ const chk=(name,c,e)=>{const bad=Object.entries(e).filter(([k,v])=>{const got=k.
 const pj=p=>[p.year,p.month,p.day,p.hour].join(' ');
 // 虛構命例（波特蘭）：近午夜換日、逆排大運；冬令時間
 const a=G(1993,9,8,1,20,45.52,-122.68);a.mainS=pj(a.main);a.ts=new Date(a.trueG).toISOString().slice(11,16);
-chk('全球 波特蘭 虛構 1993-09-08 01:20',a,{mainS:'癸酉 辛酉 癸巳 壬子','civil.day':'壬辰',clockHour:'癸丑',ts:'00:11','nextJie.local':'1993-09-07 08:08','trad.diffText':'0日17時12分','trad.text':'0年2月26日0時',startA:'1993-12-04 01:20',startB:'1993-12-03 00:20','dayun.0.gz':'庚申',off:-420,'warn.length':1});
+chk('全球 波特蘭 虛構 1993-09-08 01:20',a,{mainS:'癸酉 辛酉 癸巳 壬子','civil.day':'壬辰',clockHour:'癸丑',ts:'00:11','nextJie.local':'1993-09-07 06:57:16','nextJie.off':'UTC−08:11','trad.diffText':'0日18時22分43秒','trad.text':'0年3月1日21時26分',startA:'1993-12-09 22:46',startB:'1993-12-08 22:46','dayun.0.gz':'庚申',off:-420,'warn.length':1});
 const b=G(2001,11,20,15,30,45.52,-122.68);b.mainS=pj(b.main);
-chk('全球 波特蘭 虛構 2001-11-20 15:30',b,{mainS:'辛巳 己亥 戊子 庚申','civil.day':'丁亥',clockHour:'庚申','nextJie.local':'2001-11-07 00:37','nextJie.off':'UTC−08:00','trad.diffText':'13日14時53分','trad.text':'4年6月14日10時',startA:'2006-06-04 01:30',startB:'2006-05-13 02:30','dayun.0.gz':'戊戌',off:-480});
+chk('全球 波特蘭 虛構 2001-11-20 15:30',b,{mainS:'辛巳 己亥 戊子 庚申','civil.day':'丁亥',clockHour:'庚申','nextJie.local':'2001-11-07 00:26:16','nextJie.off':'UTC−08:11','trad.diffText':'13日15時3分43秒','trad.text':'4年6月15日7時26分',startA:'2006-06-04 22:56',startB:'2006-05-13 22:56','dayun.0.gz':'戊戌',off:-480});
 // 星僑範本兩例（真實個人）放在 repo 外，找不到就略過
 {const fs=await import('fs'),path=await import('path');const PL=process.env.PRIVATE_LUO||(process.env.PRIVATE_CASES?path.join(path.dirname(process.env.PRIVATE_CASES),'bazi-site-luo.mjs'):'/workspace/jiaodui/八字/private-cases/bazi-site-luo.mjs');
  if(fs.existsSync(PL)){const {GLOBAL_CASES}=await import(PL);for(const g of GLOBAL_CASES){const c=G(...g.a);c.mainS=pj(c.main);c.ts=new Date(c.trueG).toISOString().slice(11,16);chk('全球 '+g.name+'（私有命例）',c,g.exp);}}
  else console.log('全球 私有命例 SKIP（找不到 '+PL+'）');}
 const B=await import('./src/bazi.js');
-for(const t of ['2026-11-03 12:00','1990-01-01 12:00','1962-08-08 08:40','2024-02-04 16:30']){const [ds,ts]=t.split(' ');const [y,m,d]=ds.split('-').map(Number),[hh,mi]=ts.split(':').map(Number);
- const g=G(y,m,d,hh,mi,25.033,121.565,{roundJie:false});const n=B.buildChart({name:'t',gender:1,date:ds,time:ts});const ref=n.pillars.map(p=>p.gan+p.zhi).join(' ');
+for(const t of ['2026-11-03 12:00','1990-01-01 12:00','1962-08-08 08:40','2024-02-04 16:40']){const [ds,ts]=t.split(' ');const [y,m,d]=ds.split('-').map(Number),[hh,mi]=ts.split(':').map(Number);
+ const g=G(y,m,d,hh,mi,25.033,121.565,{roundJie:false});const n=B.buildChart({name:'t',gender:1,date:ds,time:ts,lon:121.565,zone:'Asia/Taipei'});const ref=n.pillars.map(p=>p.gan+p.zhi).join(' ');
  const o={mainS:pj(g.main),civilS:pj(g.civil)};chk('全球 台北 '+t+' = 萬年曆',o,{mainS:ref,civilS:ref});}
 const t=G(2026,11,3,12,0,25.033,121.565);chk('全球 台北 2026-11-03 辛巳日',t,{'main.day':'辛巳'});
 // 夏令時間回撥重複時段
@@ -104,6 +104,11 @@ const nyCivil=nyC.civil.day,nyMain=nyC.main.day;
 if(nyMain===nyCivil)throw new Error('NY clock should apply 70E day+1 '+nyMain+' '+nyCivil);
 const nyS=globalChart({y:1990,m:1,d:20,hh:5,mi:30,lat:40.71,lon:-74.01,gender:1,zone:'America/New_York',timeMode:'solar'});
 if(nyS.main.day===nyS.civil.day)throw new Error('NY solar should apply 70E');
+// 東經 70° 以西晚子時：時干依加一天後日干五鼠遁（丙子日應為庚子，非戊子）
+const nyLate=globalChart({y:1990,m:5,d:10,hh:23,mi:30,lat:40.71,lon:-74.01,gender:1,zone:'America/New_York',timeMode:'clock'});
+if(nyLate.main.day!=='丙子'||nyLate.main.hour!=='庚子'||nyLate.clockHour!=='庚子')throw new Error('NY late zi hour '+nyLate.main.day+' '+nyLate.main.hour+' clockHour '+nyLate.clockHour);
+const shNy=sheetData({name:'t',gender:1,date:'1990-05-10',time:'23:30',zone:'America/New_York',lon:-74.01,listDate:'2026-01-01',timeMode:'clock'});
+if([...shNy.W.bazi].reverse().join(' ')!=='庚午 辛巳 丙子 庚子')throw new Error('sheet NY late zi '+[...shNy.W.bazi].reverse().join(' '));
 // 詳細命盤：鐘錶預設、真太陽時可切
 const shC=sheetData({name:'t',gender:1,date:'1988-06-15',time:'09:30',zone:tz,lon:121.56,listDate:'2026-01-01'});
 const shS=sheetData({name:'t',gender:1,date:'1988-06-15',time:'10:55',zone:tz,lon:121.56,timeMode:'solar',listDate:'2026-01-01'});
