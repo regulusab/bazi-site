@@ -4,9 +4,9 @@ import{n as e}from"./rolldown-runtime-WkwZ5CU-.js";import{a as t,c as n,d as r,i
  <p class="muted">排盤口徑：${t(d.timeMode,{stripped:d.dstStripped,dstMin:d.dstMin})}｜出生：${n(d.wall)}（當地鐘錶時間，${d.zone}${u(`#gOff`).value===``?``:`，手動偏移`} ${r(d.off)}）｜${g} ${Math.abs(d.lat)}°、${m} ${Math.abs(d.lon)}°</p>
  ${d.warn.map(e=>`<p class="warn">⚠ ${e}</p>`).join(``)}
  <div class="gcols">${b(`干支換日線法（主盤，東經 70°）`,d.main)}${b(`一般民用日期（對照）`,d.civil)}</div>
- <p>主盤日柱 <b>${_(d.main.day)}</b>${d.main.day===d.civil.day?`，與一般民用日期相同`:`，較一般民用日期之 ${_(d.civil.day)} 日前進一日（出生地位於東經 70° 以西／西半球，有效經度 L = ${d.L.toFixed(2)}°）`}。主盤日、時柱依${d.timeMode===`clock`?`鐘錶時間（依時鐘所示）`:`真太陽時`}。鐘錶時柱為 <b>${_(d.clockHour)}</b>，真太陽時時柱為 <b>${_(d.solarHour)}</b>。</p>
+ <p>主盤日柱 <b>${_(d.main.day)}</b>${d.main.day===d.civil.day?`，與一般民用日期相同`:`，依東經 70° 以西規則，日柱干支由 ${_(d.civil.day)} 進一位（日期不動；出生地有效經度 L = ${d.L.toFixed(2)}°）`}。主盤日、時柱依${d.timeMode===`clock`?`鐘錶時間（依時鐘所示）`:`真太陽時`}。鐘錶時柱為 <b>${_(d.clockHour)}</b>，真太陽時時柱為 <b>${_(d.solarHour)}</b>。</p>
  <h3>計算過程</h3><div class="scroll"><table class="calc">
- <tr><td>當地鐘錶時間</td><td>${n(d.wall)}　${d.zone}　${r(d.off)}${d.amb?`（時鐘回撥重複時段）`:``}${d.gap?`（不存在之鐘點）`:``}${d.timeMode===`clock`?`（日柱、時柱依此，東經 70° 以西加一日）`:``}</td></tr>
+ <tr><td>當地鐘錶時間</td><td>${n(d.wall)}　${d.zone}　${r(d.off)}${d.amb?`（時鐘回撥重複時段）`:``}${d.gap?`（不存在之鐘點）`:``}${d.timeMode===`clock`?`（日柱、時柱依此；東經 70° 以西日柱干支進一位，日期不動）`:``}</td></tr>
  <tr><td>世界時 UT</td><td>${n(d.ut,!0)} UTC</td></tr>
  <tr><td>干支換日線</td><td>東經 70°；出生地${d.east?`位於線之東（東經 70°–180°），日序同一般萬年曆`:`位於線之西（含西半球），有效經度 L = 經度 + 360°`}</td></tr>
  <tr><td>有效經度 L</td><td>${d.L.toFixed(4)}°（實際經度 ${d.lon}°）</td></tr>
