@@ -39,7 +39,7 @@ const hourStem=(dayStemIdx,zi)=>((dayStemIdx%5)*2+zi)%10;
 export function globalChart(inp){const wall=Date.UTC(inp.y,inp.m-1,inp.d,inp.hh,inp.mi);
  let ut,off,amb=null,gap=false;if(inp.fixedOffMin!=null&&inp.fixedOffMin!==''){off=+inp.fixedOffMin;ut=wall-off*6e4;}else{const r=wallToUt(inp.zone,wall,inp.second);ut=r.ut;off=r.off;amb=r.ambiguous;gap=r.gap;}
  const lon=+inp.lon,east=lon>=LINE,L=east?lon:lon+360,eot=eotMin(ut);
- const meanG=ut+L/15*H,trueG=meanG+eot*6e4; // 干支換日線法：牆鐘（日期可能比民用日期多一日）
+ const meanG=ut+L/15*H,trueG=meanG+eot*6e4; // 干支換日線法：牆鐘（日柱干支進一位，日期不動）
  const meanC=ut+lon/15*H,trueC=meanC+eot*6e4; // 一般：實際經度
  const rule=inp.rule==='23'?'23':'midnight';
  const mode=inp.timeMode==='clock'?'clock':'solar'; // 預設 solar，維持舊行為

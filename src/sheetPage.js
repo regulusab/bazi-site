@@ -23,7 +23,7 @@ export function initSheet(){const pane=$('#sheet');if(pane.dataset.init)return;p
  <label>緯度<input id="sLat" type="number" step="0.0001" value="25.0330"></label>
  <label>經度<input id="sLon" type="number" step="0.0001" value="121.5654"></label>
  <label class="chk"><span><input type="checkbox" id="sStd"> 改以當地標準時間排盤（扣除夏令時間）</span><small class="muted">預設依時鐘所示、不去掉夏令。台灣曾實施：1945–1961、1974–1975、1979 年夏季</small></label>
- <label>日柱換日<select id="sDayRule"><option value="line">干支換日線（東經70°以西加一日，與星僑相同）</option><option value="civil">依出生地當地日期</option></select></label>
+ <label>日柱換日<select id="sDayRule"><option value="line">干支換日線（東經70°以西日柱干支進一位、日期不動，與星僑相同）</option><option value="civil">依出生地當地日期</option></select></label>
  <label>列表日期<input type="date" id="sList"></label>
  </div>
  <div class="row"><button id="sGen" class="pri">產生詳細命盤</button><button id="sPdf" disabled>下載 PDF</button><button id="sDocx" disabled>下載 Word</button><button id="sFrom">帶入「命主資料」</button><button id="sShare" disabled>分享連結</button></div>
@@ -50,7 +50,7 @@ export async function gen(){const msg=$('#sMsg'),note=$('#sNote');const inp=inpu
  let r;try{r=sheetData(inp);}catch(e){msg.textContent='排盤失敗：'+e.message;return;}
  const glyphs=layoutSheet(r.W);cur={inp,W:r.W,info:r.info,glyphs};
  const i=r.info,notes=[];
- notes.push(timeModeLabel(inp.timeMode,{stripped:i.dst&&inp.useStd,dstMin:i.dst}));if(i.dst&&inp.useStd)notes.push(`出生時為夏令時間，已扣除 ${i.dst} 分鐘`);if(i.shift)notes.push('出生地在東經70°以西，依干支換日線日柱加一日');
+ notes.push(timeModeLabel(inp.timeMode,{stripped:i.dst&&inp.useStd,dstMin:i.dst}));if(i.dst&&inp.useStd)notes.push(`出生時為夏令時間，已扣除 ${i.dst} 分鐘`);if(i.shift)notes.push('出生地在東經70°以西，依干支換日線日柱干支進一位（日期不動）');
  if(i.gap)notes.push('此時刻在夏令時間切換的跳空區間內，請確認');if(i.amb)notes.push('此時刻在夏令時間切換的重複區間內（採第一次）');
  note.textContent=`八字：${[...r.W.bazi].reverse().join(' ')}（年月日時）${notes.length?'｜'+notes.join('；'):''}`;
  msg.textContent='載入字型中…';

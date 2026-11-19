@@ -27,9 +27,9 @@ function run(){const [y,m,d]=$('#gDate').value.split('-').map(Number);const [hh,
  <p class="muted">排盤口徑：${timeModeLabel(c.timeMode,{stripped:c.dstStripped,dstMin:c.dstMin})}｜出生：${fmtW(c.wall)}（當地鐘錶時間，${c.zone}${$('#gOff').value!==''?'，手動偏移':''} ${offTxt(c.off)}）｜${sy} ${Math.abs(c.lat)}°、${sx} ${Math.abs(c.lon)}°</p>
  ${c.warn.map(w=>`<p class="warn">⚠ ${w}</p>`).join('')}
  <div class="gcols">${tbl('干支換日線法（主盤，東經 70°）',c.main)}${tbl('一般民用日期（對照）',c.civil)}</div>
- <p>主盤日柱 <b>${col(c.main.day)}</b>${c.main.day!==c.civil.day?`，較一般民用日期之 ${col(c.civil.day)} 日前進一日（出生地位於東經 70° 以西／西半球，有效經度 L = ${c.L.toFixed(2)}°）`:'，與一般民用日期相同'}。主盤日、時柱依${c.timeMode==='clock'?'鐘錶時間（依時鐘所示）':'真太陽時'}。鐘錶時柱為 <b>${col(c.clockHour)}</b>，真太陽時時柱為 <b>${col(c.solarHour)}</b>。</p>
+ <p>主盤日柱 <b>${col(c.main.day)}</b>${c.main.day!==c.civil.day?`，依東經 70° 以西規則，日柱干支由 ${col(c.civil.day)} 進一位（日期不動；出生地有效經度 L = ${c.L.toFixed(2)}°）`:'，與一般民用日期相同'}。主盤日、時柱依${c.timeMode==='clock'?'鐘錶時間（依時鐘所示）':'真太陽時'}。鐘錶時柱為 <b>${col(c.clockHour)}</b>，真太陽時時柱為 <b>${col(c.solarHour)}</b>。</p>
  <h3>計算過程</h3><div class="scroll"><table class="calc">
- <tr><td>當地鐘錶時間</td><td>${fmtW(c.wall)}　${c.zone}　${offTxt(c.off)}${c.amb?'（時鐘回撥重複時段）':''}${c.gap?'（不存在之鐘點）':''}${c.timeMode==='clock'?'（日柱、時柱依此，東經 70° 以西加一日）':''}</td></tr>
+ <tr><td>當地鐘錶時間</td><td>${fmtW(c.wall)}　${c.zone}　${offTxt(c.off)}${c.amb?'（時鐘回撥重複時段）':''}${c.gap?'（不存在之鐘點）':''}${c.timeMode==='clock'?'（日柱、時柱依此；東經 70° 以西日柱干支進一位，日期不動）':''}</td></tr>
  <tr><td>世界時 UT</td><td>${fmtW(c.ut,true)} UTC</td></tr>
  <tr><td>干支換日線</td><td>東經 ${LINE}°；出生地${c.east?'位於線之東（東經 70°–180°），日序同一般萬年曆':'位於線之西（含西半球），有效經度 L = 經度 + 360°'}</td></tr>
  <tr><td>有效經度 L</td><td>${c.L.toFixed(4)}°（實際經度 ${c.lon}°）</td></tr>
