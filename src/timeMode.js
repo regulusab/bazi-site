@@ -1,7 +1,7 @@
-// 排盤時間口徑（鐘錶時間／真太陽時）與夏令時間處理。
+// 排盤時間口徑（地方平時／真太陽時）與夏令時間處理。選項值仍為 clock／solar。
 // 引擎函式（buildChart、globalChart）的 timeMode 預設仍是 'solar'，以保持呼叫端相容；
-// 網站介面預設為 'clock'（鐘錶時間，依時鐘所示，不去掉夏令時間）。
-// sheetData 原本即鐘錶時間，預設維持 clock。CLOCK_STRIP_DST 預設 false（老師裁定）。
+// 網站介面預設為 'clock'（畫面稱地方平時，不去掉夏令時間）。
+// sheetData 原本即地方平時（選項 clock），預設維持 clock。CLOCK_STRIP_DST 預設 false（老師裁定）。
 import {zoneOffsetMin, wallToUt, CLOCK_STRIP_DST, standardOffsetMin} from './global.js';
 export {CLOCK_STRIP_DST, standardOffsetMin};
 
@@ -53,10 +53,10 @@ export function timeModeLabel(mode,info={}){
   if(mode==='solar')return '真太陽時（經度＋均時差校正）';
   if(info.stripped&&info.dstMin){
     const from=info.inputTime,to=info.standardTime;
-    if(from&&to)return `鐘錶時間（當地標準時間，已將夏令時間 ${from} 改為 ${to}）`;
-    return `鐘錶時間（當地標準時間，已去掉夏令時間 ${info.dstMin} 分鐘）`;
+    if(from&&to)return `地方平時（當地標準時間，已將夏令時間 ${from} 改為 ${to}）`;
+    return `地方平時（當地標準時間，已去掉夏令時間 ${info.dstMin} 分鐘）`;
   }
-  return '鐘錶時間（依時鐘所示）';
+  return '地方平時';
 }
 
 
@@ -75,7 +75,7 @@ export function bindTimeMode(id, onChange){
 export function timeModeSelectHtml(id,mode){
   const m=normalizeTimeMode(mode);
   return `<label>排盤時間口徑<select id="${id}">`
-    +`<option value="clock"${m==='clock'?' selected':''}>鐘錶時間（預設）</option>`
+    +`<option value="clock"${m==='clock'?' selected':''}>地方平時（預設）</option>`
     +`<option value="solar"${m==='solar'?' selected':''}>真太陽時</option>`
     +`</select></label>`;
 }

@@ -73,7 +73,7 @@ export function globalChart(inp){const wall=Date.UTC(inp.y,inp.m-1,inp.d,inp.hh,
   dayun.push({gz:gz(mI+(forward?k+1:-(k+1))),tradStart:fmtW(aW),tradAge:trad.Y+10*k,x120Start:b!=null?fmtW(toLmt(b)):'—',x120Off:b!=null?offTxt(Math.round(lmtOffsetMin(lon))):'',jie:seq[k]?seq[k].name+' '+fmtW(toLmt(seq[k].ut),true):''});}
  // 交界警示
  const warn=[];const near=(h,b)=>{const x=(((h-b)%24)+24)%24;return Math.min(x,24-x)<0.25;};
- const usedH=G.h,usedLabel=mode==='clock'?'鐘錶時間':'真太陽時',usedFmt=mode==='clock'?fmtW(stdWall):fmtW(trueG);
+ const usedH=G.h,usedLabel=mode==='clock'?'地方平時':'真太陽時',usedFmt=mode==='clock'?fmtW(stdWall):fmtW(trueG);
  for(const b of [1,3,5,7,9,11,13,15,17,19,21,23])if(near(usedH,b)){warn.push(`${usedLabel} ${usedFmt.slice(11)} 距時辰交界 ${p2(b)}:00 不到 15 分鐘，時柱可能改變`);break;}
  if(near(usedH,0))warn.push(`${usedLabel}距午夜換日不到 15 分鐘，日柱可能改變`);if(rule==='23'&&near(usedH,23))warn.push(`${usedLabel}距 23:00 換日不到 15 分鐘`);
  const jPrev=JIE[i],jNext=JIE[i+1];for(const j of [jPrev,jNext])if(Math.abs(jieMsToLmt(j.ms,lon)-birthLmtMs)<15*6e4)warn.push(`出生距 ${j.name} 交節（地方平時）不到 15 分鐘，年／月柱可能改變`);

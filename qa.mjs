@@ -32,7 +32,7 @@ await p.close();
 for(const [dt,tm] of [['1962-08-08','00:10'],['1975-06-01','12:00']]){[p,e]=await open(`?d=${dt}&t=${tm}&g=1`,'#chart');const a=await txt(p,'#chart');await p.close();[p,e]=await open(`?d=${dt}&t=${tm}&g=1&dst=1`,'#chart');const bb=await txt(p,'#chart');ok(`DST ${dt} shifts −1h`,a!==bb&&bb.includes(dt<'1970'?'排盤時間：1962-08-07 23:10':'排盤時間：1975-06-01 11:00'),'');ok(`DST ${dt} no errors`,e.length===0,e.join('|'));await p.close();}
 // time mode: 1988-06-15 10:55 Taipei, clock 癸巳 vs solar 甲午; 1960-07-01 10:00 stays 10:00
 [p,e]=await open('?n=QA&d=1988-06-15&t=10:55&g=1&lon=121.56&tm=clock','#chart');
-ok('1988 10:55 clock hour 癸巳',(await txt(p,'#chart')).includes('癸')&&(await txt(p,'#chart')).includes('排盤口徑：鐘錶時間')&&(await txt(p,'#chart')).includes('10:55'),(await txt(p,'#chart')).split('\n').slice(0,4).join('|'));
+ok('1988 10:55 clock hour 癸巳',(await txt(p,'#chart')).includes('癸')&&(await txt(p,'#chart')).includes('排盤口徑：地方平時')&&(await txt(p,'#chart')).includes('10:55'),(await txt(p,'#chart')).split('\n').slice(0,4).join('|'));
 ok('timeMode select clock',await p.inputValue('#timeMode')==='clock');
 await p.selectOption('#timeMode','solar');await p.click('#calc');await p.waitForTimeout(800);
 ok('1988 10:55 solar hour 甲午',(await txt(p,'#chart')).includes('甲午')||((await txt(p,'#chart')).includes('甲')&&(await txt(p,'#chart')).includes('真太陽時')),(await txt(p,'#chart')).split('\n').slice(0,6).join('|'));

@@ -17,12 +17,12 @@ export function initSheet(){const pane=$('#sheet');if(pane.dataset.init)return;p
  <label>性別<select id="sGender"><option value="1">男（乾造）</option><option value="0">女（坤造）</option></select></label>
  <label>出生日期（國曆）<input type="date" id="sDate" value="1990-01-01"></label>
  <label>出生時間（時：分）<input type="time" id="sTime" value="12:00"></label>
- <label>排盤時間口徑<select id="sTimeMode"><option value="clock" selected>鐘錶時間（預設）</option><option value="solar">真太陽時</option></select></label>
+ <label>排盤時間口徑<select id="sTimeMode"><option value="clock" selected>地方平時（預設）</option><option value="solar">真太陽時</option></select></label>
  <label>出生地<select id="sCity">${CITIES.map((c,i)=>`<option value="${i}">${c[0]}</option>`).join('')}</select></label>
  <label>時區（IANA）<input id="sZone" value="Asia/Taipei"></label>
  <label>緯度<input id="sLat" type="number" step="0.0001" value="25.0330"></label>
  <label>經度<input id="sLon" type="number" step="0.0001" value="121.5654"></label>
- <label class="chk"><span><input type="checkbox" id="sStd"> 改以當地標準時間排盤（扣除夏令時間）</span><small class="muted">預設依時鐘所示、不去掉夏令。台灣曾實施：1945–1961、1974–1975、1979 年夏季</small></label>
+ <label class="chk"><span><input type="checkbox" id="sStd"> 改以當地標準時間排盤（扣除夏令時間）</span><small class="muted">預設依地方平時、不去掉夏令。台灣曾實施：1945–1961、1974–1975、1979 年夏季</small></label>
  <label>日柱換日<select id="sDayRule"><option value="line">干支換日線（東經70°以西日柱干支進一位、日期不動，與星僑相同）</option><option value="civil">依出生地當地日期</option></select></label>
  <label>列表日期<input type="date" id="sList"></label>
  </div>

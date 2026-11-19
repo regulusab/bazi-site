@@ -7,8 +7,8 @@ const ctx=await b.newContext({acceptDownloads:true,permissions:['clipboard-read'
 const errs=[];const pg=async(u,vp)=>{const p=await ctx.newPage();if(vp)await p.setViewportSize(vp);p.on('pageerror',e=>errs.push(e.message));p.on('dialog',d=>d.accept());await p.goto(u);await p.waitForTimeout(1500);return p;};
 const cells=async p=>(await p.locator('#gOut .gcols table').allInnerTexts()).map(t=>t.split('\n').pop().replace(/\s/g,''));
 let p=await pg(BASE+'index.html');ok('main nav link to global.html',await p.locator('nav a[href="./global.html"]').count()===1);await p.click('nav a[href="./global.html"]');await p.waitForTimeout(1500);
-let c=await cells(p);ok('Portland default clock (fictional) 癸酉辛酉癸巳癸丑',c[0]==='癸酉辛酉癸巳癸丑',c.join('|'));ok('Portland default civil day 壬辰',c[1].slice(4,6)==='壬辰',c[1]);ok('toggle default is 鐘錶時間',await p.inputValue('#gTimeMode')==='clock');
-let t=await p.locator('#gOut').innerText();ok('clock hour 癸丑 shown',t.includes('時柱為 癸丑')||t.includes('鐘錶時柱為 癸丑'));ok('calc panel (UT/EoT/L)',t.includes('1993-09-08 08:20:00 UTC')&&t.includes('237.3200')&&t.includes('均時差'));
+let c=await cells(p);ok('Portland default clock (fictional) 癸酉辛酉癸巳癸丑',c[0]==='癸酉辛酉癸巳癸丑',c.join('|'));ok('Portland default civil day 壬辰',c[1].slice(4,6)==='壬辰',c[1]);ok('toggle default is clock（畫面地方平時）',await p.inputValue('#gTimeMode')==='clock');
+let t=await p.locator('#gOut').innerText();ok('clock hour 癸丑 shown',t.includes('時柱為 癸丑')||t.includes('地方平時時柱為 癸丑')||t.includes('鐘錶時柱為 癸丑'));ok('calc panel (UT/EoT/L)',t.includes('1993-09-08 08:20:00 UTC')&&t.includes('237.3200')&&t.includes('均時差'));
 ok('大運 庚申 + both conventions',t.includes('庚申')&&t.includes('三日折一年')&&t.includes('× 120'));
 // toggle to true solar
 await p.selectOption('#gTimeMode','solar');await p.click('#gCalc');await p.waitForTimeout(300);c=await cells(p);t=await p.locator('#gOut').innerText();

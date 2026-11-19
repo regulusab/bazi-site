@@ -24,25 +24,25 @@ function run(){const [y,m,d]=$('#gDate').value.split('-').map(Number);const [hh,
  const ruleTxt=c.rule==='23'?'23:00 換日（子初換日）':'真太陽時午夜換日（23–24 時為晚子時，日柱不換、時干依次日）';
  $('#gOut').innerHTML=`<div class="row xbar noprint"><button data-k="docx">下載 Word</button><button data-k="pdf">下載 PDF</button><button data-k="share">分享</button><small class="muted xmsg"></small></div>
  <h2>${name} 全球八字（${+$('#gGender').value?'乾造':'坤造'}）</h2>
- <p class="muted">排盤口徑：${timeModeLabel(c.timeMode,{stripped:c.dstStripped,dstMin:c.dstMin})}｜出生：${fmtW(c.wall)}（當地鐘錶時間，${c.zone}${$('#gOff').value!==''?'，手動偏移':''} ${offTxt(c.off)}）｜${sy} ${Math.abs(c.lat)}°、${sx} ${Math.abs(c.lon)}°</p>
+ <p class="muted">排盤口徑：${timeModeLabel(c.timeMode,{stripped:c.dstStripped,dstMin:c.dstMin})}｜出生：${fmtW(c.wall)}（地方平時，${c.zone}${$('#gOff').value!==''?'，手動偏移':''} ${offTxt(c.off)}）｜${sy} ${Math.abs(c.lat)}°、${sx} ${Math.abs(c.lon)}°</p>
  ${c.warn.map(w=>`<p class="warn">⚠ ${w}</p>`).join('')}
  <div class="gcols">${tbl('干支換日線法（主盤，東經 70°）',c.main)}${tbl('一般民用日期（對照）',c.civil)}</div>
- <p>主盤日柱 <b>${col(c.main.day)}</b>${c.main.day!==c.civil.day?`，依東經 70° 以西規則，日柱干支由 ${col(c.civil.day)} 進一位（日期不動；出生地有效經度 L = ${c.L.toFixed(2)}°）`:'，與一般民用日期相同'}。主盤日、時柱依${c.timeMode==='clock'?'鐘錶時間（依時鐘所示）':'真太陽時'}。鐘錶時柱為 <b>${col(c.clockHour)}</b>，真太陽時時柱為 <b>${col(c.solarHour)}</b>。</p>
+ <p>主盤日柱 <b>${col(c.main.day)}</b>${c.main.day!==c.civil.day?`，依東經 70° 以西規則，日柱干支由 ${col(c.civil.day)} 進一位（日期不動；出生地有效經度 L = ${c.L.toFixed(2)}°）`:'，與一般民用日期相同'}。主盤日、時柱依${c.timeMode==='clock'?'地方平時':'真太陽時'}。地方平時時柱為 <b>${col(c.clockHour)}</b>，真太陽時時柱為 <b>${col(c.solarHour)}</b>。</p>
  <h3>計算過程</h3><div class="scroll"><table class="calc">
- <tr><td>當地鐘錶時間</td><td>${fmtW(c.wall)}　${c.zone}　${offTxt(c.off)}${c.amb?'（時鐘回撥重複時段）':''}${c.gap?'（不存在之鐘點）':''}${c.timeMode==='clock'?'（日柱、時柱依此；東經 70° 以西日柱干支進一位，日期不動）':''}</td></tr>
+ <tr><td>地方平時</td><td>${fmtW(c.wall)}　${c.zone}　${offTxt(c.off)}${c.amb?'（時鐘回撥重複時段）':''}${c.gap?'（不存在之鐘點）':''}${c.timeMode==='clock'?'（日柱、時柱依此；東經 70° 以西日柱干支進一位，日期不動）':''}</td></tr>
  <tr><td>世界時 UT</td><td>${fmtW(c.ut,true)} UTC</td></tr>
  <tr><td>干支換日線</td><td>東經 ${LINE}°；出生地${c.east?'位於線之東（東經 70°–180°），日序同一般萬年曆':'位於線之西（含西半球），有效經度 L = 經度 + 360°'}</td></tr>
  <tr><td>有效經度 L</td><td>${c.L.toFixed(4)}°（實際經度 ${c.lon}°）</td></tr>
  <tr><td>干支地方平太陽時</td><td>${fmtW(c.meanG,true)}（UT + L÷15 = ${(c.L/15).toFixed(4)} 小時）</td></tr>
  <tr><td>均時差 EoT</td><td>${c.eot>=0?'+':''}${c.eot.toFixed(2)} 分鐘</td></tr>
- <tr><td>干支地方真太陽時</td><td><b>${fmtW(c.trueG,true)}</b>${c.timeMode==='solar'?'（日柱、時柱依此）':'（對照；目前日、時柱依鐘錶時間）'}</td></tr>
+ <tr><td>干支地方真太陽時</td><td><b>${fmtW(c.trueG,true)}</b>${c.timeMode==='solar'?'（日柱、時柱依此）':'（對照；目前日、時柱依地方平時）'}</td></tr>
  <tr><td>一般地方真太陽時</td><td>${fmtW(c.trueC,true)}（實際經度，對照盤）</td></tr>
  <tr><td>換日規則</td><td>${ruleTxt}</td></tr>
  <tr><td>年柱／月柱</td><td>以 UT 瞬間比對節氣；目前節：${c.jieNow.name} ${c.jieNow.local}（出生地時間）</td></tr>
- <tr><td>民用日期之日柱</td><td>鐘錶日期 ${fmtW(c.wall).slice(0,10)} → ${col(c.civilClockDay)}</td></tr></table></div>
+ <tr><td>民用日期之日柱</td><td>地方平時日期 ${fmtW(c.wall).slice(0,10)} → ${col(c.civilClockDay)}</td></tr></table></div>
  <h3>大運（${c.forward?'順排':'逆排'}：年干${'陽陰'[GAN.indexOf(c.main.year[0])%2]}・${+$('#gGender').value?'男':'女'}命）</h3>
  <p>${c.forward?'下一':'上一'}個節：<b>${c.nextJie.name} ${c.nextJie.local}</b>（出生地時間 ${c.nextJie.off}；UT ${c.nextJie.utc}${$('#gRound').checked?'，已取整分':''}）。出生至交節實際時間差 <b>${c.trad.diffText}</b>。</p>
- <p>（a）三日折一年（1 日＝4 個月、1 時＝5 日、1 分＝2 時）：起運 <b>${c.trad.text}</b>，以曆法年月日時加到出生鐘錶時間 → 交運約 <b>${c.startA}</b>。<br>（b）時間差 × 120 加回出生瞬間（本站逐日對照口徑）→ 交運約 <b>${c.startB}</b>（出生地時間）。</p>
+ <p>（a）三日折一年（1 日＝4 個月、1 時＝5 日、1 分＝2 時）：起運 <b>${c.trad.text}</b>，以曆法年月日時加到出生地方平時 → 交運約 <b>${c.startA}</b>。<br>（b）時間差 × 120 加回出生瞬間（本站逐日對照口徑）→ 交運約 <b>${c.startB}</b>（出生地時間）。</p>
  <div class="scroll"><table><tr><th>步</th><th>大運</th><th>(a) 三日折一年 交運</th><th>虛齡起</th><th>(b) ×120 交運（出生地時間）</th><th>對應節氣</th></tr>
  ${c.dayun.map((d,i)=>`<tr><td>${i+1}</td><td class="big">${col(d.gz)}</td><td>${d.tradStart}</td><td>${d.tradAge} 歲</td><td>${d.x120Start} <small>${d.x120Off}</small></td><td><small>${d.jie}</small></td></tr>`).join('')}</table></div>
  <p class="muted">交運日期以出生地時區規則（含未來夏令時間現行規則）換算；(a)(b) 兩種換算方法原理不同，日期不同屬正常。×120 法中交節時刻差 1 分鐘，交運即差 2 小時。</p>`;
